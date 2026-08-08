@@ -5,6 +5,8 @@ final class FillLightOverlayController {
     private var panel: FillLightPanel?
     private var lightView: FillLightView?
 
+    var isPresented: Bool { panel != nil }
+
     func apply(settings: FillLightSettings, displayID: CGDirectDisplayID?) {
         guard settings.enabled else {
             close()
@@ -43,8 +45,8 @@ final class FillLightOverlayController {
         panel?.orderFrontRegardless()
     }
 
-    func bringToFront() {
-        panel?.orderFrontRegardless()
+    func refreshForCalibration(settings: FillLightSettings, displayID: CGDirectDisplayID?) {
+        apply(settings: settings, displayID: displayID)
     }
 
     func close() {

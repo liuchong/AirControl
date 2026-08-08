@@ -367,7 +367,10 @@ final class AppModel: ObservableObject {
                 self?.cancelGazeCalibration()
             }
             gazeOverlay.update(stage: 0, progress: 0)
-            fillLightOverlay.bringToFront()
+            fillLightOverlay.refreshForCalibration(
+                settings: fillLightSettings,
+                displayID: selectedDisplayID
+            )
             runState = .calibratingGaze
         } catch {
             gazeCalibrationResumePolicy.reset()

@@ -33,6 +33,7 @@
 		93084A5FEC067F1A4E979788 /* GlobalHotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6000BEBD981B0CA7552D1284 /* GlobalHotKey.swift */; };
 		94385472D4E0B950DC3D9DCB /* bimanual_drag_loss.json in Resources */ = {isa = PBXBuildFile; fileRef = 1C0679443922A08F0D1EABC8 /* bimanual_drag_loss.json */; };
 		968A66D7302B3F3ED033F0BB /* bimanual_precision_click.json in Resources */ = {isa = PBXBuildFile; fileRef = 7ABE48A3BD6B4ABE380B2476 /* bimanual_precision_click.json */; };
+		9A1A2E4C7F59020B607638B1 /* FillLightOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49184971E0C81B2D889CFE9F /* FillLightOverlayTests.swift */; };
 		9AA0FB62A6EA4EAAA8E63650 /* short_click.json in Resources */ = {isa = PBXBuildFile; fileRef = 04702FE63DF52DC09D32490A /* short_click.json */; };
 		9D2CF39422A78A64A8623385 /* GazeCalibrationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E442D347C2A2B4E943685E9 /* GazeCalibrationOverlay.swift */; };
 		9DDEE2A913D147741A19A836 /* HandPoseEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C44411C9A08210DEFCD78F /* HandPoseEstimator.swift */; };
@@ -90,6 +91,7 @@
 		308AE2A768D437DE43978540 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		37CA64F5D4CE586F1E3269AF /* DisplayDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayDescriptor.swift; sourceTree = "<group>"; };
 		46AC713DF2C0F857231A3638 /* AirControl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AirControl.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		49184971E0C81B2D889CFE9F /* FillLightOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FillLightOverlayTests.swift; sourceTree = "<group>"; };
 		49B3D1B418E7F75465A6CB10 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
 		4E413E450A11A915FFF34EB8 /* GazeCalibrationResumePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GazeCalibrationResumePolicy.swift; sourceTree = "<group>"; };
 		4EB8E96F5BAB55716F815301 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
@@ -179,6 +181,7 @@
 				65FCA38CC0A6F0A2C7FCE31E /* AppRunStateTests.swift */,
 				286FAF2459F777334FFD319F /* CoreEngineTests.swift */,
 				68D18A19F4699AFA7CB03621 /* DisplaySelectionTests.swift */,
+				49184971E0C81B2D889CFE9F /* FillLightOverlayTests.swift */,
 				5A2B01EB28A4A826AB96B02D /* GazeCalibrationResumePolicyTests.swift */,
 				218B13BD799002023E038D01 /* GazeGeometryTests.swift */,
 				FD4F184F0BB31C343FDE301E /* SettingsStoreTests.swift */,
@@ -441,6 +444,7 @@
 				4E1461F5C63347DE3CEB181A /* AppRunStateTests.swift in Sources */,
 				2120E502D617C7A8326B1D3F /* CoreEngineTests.swift in Sources */,
 				7E9AE6E95EA3CB66157827FC /* DisplaySelectionTests.swift in Sources */,
+				9A1A2E4C7F59020B607638B1 /* FillLightOverlayTests.swift in Sources */,
 				0C872A5DF4B0C404ACFADCCD /* GazeCalibrationResumePolicyTests.swift in Sources */,
 				02B5EC66FB2F82A35EE9D1B7 /* GazeGeometryTests.swift in Sources */,
 				C5E20366C16F209B355E2AC6 /* SettingsStoreTests.swift in Sources */,

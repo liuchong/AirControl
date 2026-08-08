@@ -23,4 +23,19 @@ final class PlatformBehaviorIntegrationTests: XCTestCase {
             FillLightSettings(enabled: true, brightness: 0.8, warmth: -0.25)
         )
     }
+
+    @MainActor
+    func testPersistedDisabledFillLightStaysClosedDuringCalibrationRefresh() throws {
+        let suiteName = "AirControlIntegrationTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let settings = try SettingsStore(defaults: defaults).fillLightSettings
+        let controller = FillLightOverlayController()
+
+        controller.refreshForCalibration(settings: settings, displayID: nil)
+
+        XCTAssertFalse(settings.enabled)
+        XCTAssertFalse(controller.isPresented)
+    }
 }
