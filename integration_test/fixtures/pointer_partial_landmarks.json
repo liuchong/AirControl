@@ -1,0 +1,11 @@
+{
+  "frames": [
+    {
+      "timestamp": 0.00,
+      "pointerX": 0.52,
+      "ringTipConfidence": 0.0
+    }
+  ],
+  "expectedCommandKinds": [],
+  "expectedAllCommandKinds": [1]
+}

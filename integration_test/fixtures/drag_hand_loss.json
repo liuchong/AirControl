@@ -1,0 +1,10 @@
+{
+  "frames": [
+    { "timestamp": 0.00, "primaryPinch": true },
+    { "timestamp": 0.05, "primaryPinch": true },
+    { "timestamp": 0.36, "primaryPinch": true },
+    { "timestamp": 0.45, "handPresent": false },
+    { "timestamp": 0.58, "handPresent": false }
+  ],
+  "expectedCommandKinds": [2, 3]
+}

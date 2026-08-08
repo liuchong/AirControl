@@ -1,0 +1,4 @@
+module AirControlCoreFFI {
+    header "aircontrol_core.h"
+    export *
+}

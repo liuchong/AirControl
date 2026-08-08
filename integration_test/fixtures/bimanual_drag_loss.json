@@ -1,0 +1,10 @@
+{
+  "bimanual": true,
+  "frames": [
+    {"timestamp": 0.00, "leftPose": "threeFingers"},
+    {"timestamp": 0.13, "leftPose": "threeFingers"},
+    {"timestamp": 0.35, "leftPresent": false}
+  ],
+  "expectedCommandKinds": [2, 3],
+  "expectedAllCommandKinds": [7, 2, 3, 7]
+}

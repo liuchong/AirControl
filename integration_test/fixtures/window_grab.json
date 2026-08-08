@@ -1,0 +1,15 @@
+{
+  "frames": [
+    {"timestamp": 0.00, "rightPose": "openPalm"},
+    {"timestamp": 0.13, "rightPose": "openPalm"},
+    {"timestamp": 0.20, "rightPose": "closing"},
+    {"timestamp": 0.25, "rightPose": "fist", "palmX": 0.53, "palmY": 0.23},
+    {"timestamp": 0.29, "rightPose": "fist", "palmX": 0.53, "palmY": 0.23},
+    {"timestamp": 0.34, "rightPose": "fist", "palmX": 0.53, "palmY": 0.23},
+    {"timestamp": 0.40, "rightPose": "fist", "palmX": 0.56, "palmY": 0.25},
+    {"timestamp": 0.46, "rightPose": "openPalm"},
+    {"timestamp": 0.51, "rightPose": "openPalm"}
+  ],
+  "expectedCommandKinds": [8, 9, 10],
+  "expectedAllCommandKinds": [1, 8, 9, 10]
+}

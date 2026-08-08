@@ -1,0 +1,86 @@
+name: AirControl
+options:
+  bundleIdPrefix: com.liuchong
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "26.0"
+settings:
+  base:
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: targeted
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    CLANG_ENABLE_MODULES: YES
+    SWIFT_INCLUDE_PATHS:
+      - "$(inherited)"
+      - "$(SRCROOT)/include"
+targets:
+  AirControl:
+    type: application
+    platform: macOS
+    sources:
+      - path: AirControl
+    info:
+      path: Config/Info.plist
+      properties:
+        NSCameraUsageDescription: AirControl 使用摄像头在本机识别手势和视线辅助，不会录制、保存或上传画面。
+    entitlements:
+      path: Config/AirControl.entitlements
+      properties:
+        com.apple.security.device.camera: true
+    preBuildScripts:
+      - name: Build Rust core
+        script: '"$SRCROOT/scripts/build-rust-core.sh" "$CONFIGURATION" "$ARCHS"'
+        basedOnDependencyAnalysis: false
+        outputFiles:
+          - "$(SRCROOT)/.build/rust/$(CONFIGURATION)/libaircontrol_core.a"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.liuchong.AirControl
+        PRODUCT_NAME: AirControl
+        CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_HARDENED_RUNTIME: YES
+        LIBRARY_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/.build/rust/$(CONFIGURATION)"
+        SWIFT_INCLUDE_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/include"
+        OTHER_LDFLAGS:
+          - "$(inherited)"
+          - -laircontrol_core
+  AirControlTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/AirControlTests
+    dependencies:
+      - target: AirControl
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.liuchong.AirControlTests
+  AirControlIntegrationTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: integration_test/AirControlIntegrationTests
+      - path: integration_test/fixtures
+        buildPhase: resources
+    dependencies:
+      - target: AirControl
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.liuchong.AirControlIntegrationTests
+schemes:
+  AirControl:
+    build:
+      targets:
+        AirControl: all
+        AirControlTests: [test]
+        AirControlIntegrationTests: [test]
+    test:
+      gatherCoverageData: true
+      targets:
+        - AirControlTests
+        - AirControlIntegrationTests

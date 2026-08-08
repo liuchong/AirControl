@@ -1,0 +1,17 @@
+{
+  "frames": [
+    { "timestamp": 0.00, "pointerX": 0.44 },
+    { "timestamp": 0.05, "indexX": 0.50, "indexY": 0.75 },
+    {
+      "timestamp": 0.09,
+      "indexX": 0.51,
+      "indexY": 0.74,
+      "thumbConfidence": 0.0
+    },
+    { "timestamp": 0.12, "indexX": 0.52, "indexY": 0.73 },
+    { "timestamp": 0.20 },
+    { "timestamp": 0.24 }
+  ],
+  "expectedCommandKinds": [6],
+  "expectedAllCommandKinds": [1, 6]
+}

@@ -1,0 +1,9 @@
+{
+  "frames": [
+    { "timestamp": 0.00, "secondaryPinch": true },
+    { "timestamp": 0.05, "secondaryPinch": true },
+    { "timestamp": 0.20, "secondaryPinch": false },
+    { "timestamp": 0.24, "secondaryPinch": false }
+  ],
+  "expectedCommandKinds": [6]
+}

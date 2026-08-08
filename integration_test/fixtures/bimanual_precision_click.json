@@ -1,0 +1,13 @@
+{
+  "bimanual": true,
+  "frames": [
+    {"timestamp": 0.00, "leftPose": "openPalm"},
+    {"timestamp": 0.13, "leftPose": "openPalm"},
+    {"timestamp": 0.18, "leftPose": "openPalm", "primaryPinch": true},
+    {"timestamp": 0.23, "leftPose": "openPalm", "primaryPinch": true},
+    {"timestamp": 0.31, "leftPose": "openPalm"},
+    {"timestamp": 0.35, "leftPose": "openPalm"}
+  ],
+  "expectedCommandKinds": [6],
+  "expectedAllCommandKinds": [7, 6]
+}
