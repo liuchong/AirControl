@@ -50,6 +50,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var gazeStatus = "视线辅助已关闭"
     @Published private(set) var gazeCalibrationStage = 0
     @Published private(set) var gazeCalibrationProgress = 0.0
+    @Published private(set) var fillLightSettings = FillLightSettings.default
     @Published var selectedCameraID: String?
     @Published var selectedDisplayID: CGDirectDisplayID?
     @Published var showingHelp = false
@@ -68,6 +69,8 @@ final class AppModel: ObservableObject {
     private var gazeCalibration: GazeCalibrationController?
     private var gazeMapper: GazeMapper?
     private let gazeOverlay = GazeCalibrationOverlayController()
+    private let fillLightOverlay = FillLightOverlayController()
+    private var gazeCalibrationResumePolicy = GazeCalibrationResumePolicy()
     private var lastAnyHandSeenAt: Double?
     private var gazeSuppressedByHand = false
     private var visionFailureTracker = VisionFailureTracker(failureLimit: 5, recoverySuccessLimit: 2)
@@ -122,6 +125,8 @@ final class AppModel: ObservableObject {
             try rebuildCore(using: store.settings)
             gazeAssistEnabled = store.gazeAssistEnabled
             gazeCalibrated = store.gazeProfile != nil
+            fillLightSettings = store.fillLightSettings
+            fillLightOverlay.apply(settings: fillLightSettings, displayID: selectedDisplayID)
             if gazeAssistEnabled {
                 try rebuildGazeMapper(using: store.settings)
                 gazeStatus = "等待清晰视线"
@@ -200,16 +205,7 @@ final class AppModel: ObservableObject {
         if controlEnabled {
             safeStop()
         } else {
-            controlGeneration += 1
-            let generation = controlGeneration
-            controlEnabled = true
-            gesturePaused = false
-            visionSuspended = true
-            visionFailureTracker.reset()
-            runState = .recovering("正在重新连接摄像头")
-            Task { [weak self] in
-                await self?.activateControl(generation: generation)
-            }
+            beginControlActivation()
         }
     }
 
@@ -224,6 +220,7 @@ final class AppModel: ObservableObject {
         cursor.releaseAll()
         lastAnyHandSeenAt = nil
         gazeSuppressedByHand = false
+        gazeCalibrationResumePolicy.reset()
         if cameraAuthorized { runState = .previewOnly }
     }
 
@@ -268,6 +265,7 @@ final class AppModel: ObservableObject {
             try rebuildCore(using: settings)
             if gazeAssistEnabled { try rebuildGazeMapper(using: settings) }
             store.saveDisplayID(resolvedID)
+            fillLightOverlay.apply(settings: fillLightSettings, displayID: resolvedID)
         } catch {
             runState = .error(error.localizedDescription)
         }
@@ -288,6 +286,19 @@ final class AppModel: ObservableObject {
     }
 
     var smoothing: Double { settingsStore?.settings.smoothing ?? 0.32 }
+
+    func updateFillLight(enabled: Bool? = nil, brightness: Double? = nil, warmth: Double? = nil) {
+        guard let store = settingsStore else { return }
+        let next = FillLightSettings(
+            enabled: enabled ?? fillLightSettings.enabled,
+            brightness: brightness ?? fillLightSettings.brightness,
+            warmth: warmth ?? fillLightSettings.warmth
+        )
+        guard next.isValid else { return }
+        store.saveFillLight(next)
+        fillLightSettings = next
+        fillLightOverlay.apply(settings: next, displayID: selectedDisplayID)
+    }
 
     func gestureEnabled(_ option: GestureOption) -> Bool {
         guard let settings = settingsStore?.settings else { return false }
@@ -340,7 +351,9 @@ final class AppModel: ObservableObject {
     }
 
     func beginGazeCalibration() {
+        let wasControlEnabled = controlEnabled
         safeStop()
+        gazeCalibrationResumePolicy.begin(wasControlEnabled: wasControlEnabled)
         do {
             guard let settings = settingsStore?.settings else { return }
             gazeCalibration = try GazeCalibrationController(
@@ -354,8 +367,10 @@ final class AppModel: ObservableObject {
                 self?.cancelGazeCalibration()
             }
             gazeOverlay.update(stage: 0, progress: 0)
+            fillLightOverlay.bringToFront()
             runState = .calibratingGaze
         } catch {
+            gazeCalibrationResumePolicy.reset()
             gazeCalibration = nil
             estimator.setGazeEnabled(gazeAssistEnabled)
             runState = .error(error.localizedDescription)
@@ -363,6 +378,11 @@ final class AppModel: ObservableObject {
     }
 
     func cancelGazeCalibration() {
+        _ = gazeCalibrationResumePolicy.finish(
+            .cancelled,
+            cameraAuthorized: cameraAuthorized,
+            accessibilityGranted: accessibilityGranted
+        )
         gazeCalibration = nil
         gazeOverlay.close()
         gazeCalibrationProgress = 0
@@ -404,6 +424,19 @@ final class AppModel: ObservableObject {
             controlEnabled = false
             visionSuspended = false
             runState = .error(error.localizedDescription)
+        }
+    }
+
+    private func beginControlActivation() {
+        controlGeneration += 1
+        let generation = controlGeneration
+        controlEnabled = true
+        gesturePaused = false
+        visionSuspended = true
+        visionFailureTracker.reset()
+        runState = .recovering("正在重新连接摄像头")
+        Task { [weak self] in
+            await self?.activateControl(generation: generation)
         }
     }
 
@@ -579,6 +612,7 @@ final class AppModel: ObservableObject {
             try rebuildCore(using: settings)
             if gazeAssistEnabled { try rebuildGazeMapper(using: settings) }
             store.saveDisplayID(selection.id)
+            fillLightOverlay.apply(settings: fillLightSettings, displayID: selection.id)
             lastGesture = "目标显示器已断开，控制已安全停止"
             runState = .previewOnly
         } catch {
@@ -671,12 +705,28 @@ final class AppModel: ObservableObject {
                 gazeCalibrationProgress = 1
                 gazeStatus = "校准完成，等待清晰视线"
                 estimator.setGazeEnabled(true)
-                runState = .previewOnly
+                cameraAuthorized = PermissionManager.cameraStatus == .authorized
+                refreshAccessibility()
+                let shouldResume = gazeCalibrationResumePolicy.finish(
+                    .completed,
+                    cameraAuthorized: cameraAuthorized,
+                    accessibilityGranted: accessibilityGranted
+                )
+                if shouldResume {
+                    beginControlActivation()
+                } else {
+                    runState = .previewOnly
+                }
             } catch {
                 cancelGazeCalibration()
                 runState = .error(error.localizedDescription)
             }
         case .invalidProfile:
+            _ = gazeCalibrationResumePolicy.finish(
+                .failed,
+                cameraAuthorized: cameraAuthorized,
+                accessibilityGranted: accessibilityGranted
+            )
             gazeCalibration = nil
             gazeOverlay.close()
             gazeCalibrationProgress = 0

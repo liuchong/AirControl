@@ -85,4 +85,31 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(store.gazeAssistEnabled)
         XCTAssertNil(store.gazeProfile)
     }
+
+    func testFillLightDefaultsOffAndPersistsValidatedSettings() throws {
+        let suiteName = "AirControlTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = try SettingsStore(defaults: defaults)
+
+        XCTAssertEqual(store.fillLightSettings, .default)
+
+        store.saveFillLight(FillLightSettings(enabled: true, brightness: 0.72, warmth: 0.4))
+        XCTAssertEqual(
+            try SettingsStore(defaults: defaults).fillLightSettings,
+            FillLightSettings(enabled: true, brightness: 0.72, warmth: 0.4)
+        )
+    }
+
+    func testInvalidFillLightSettingsFallBackToSafeDefaults() throws {
+        let suiteName = "AirControlTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set(
+            Data(#"{"enabled":true,"brightness":2.0,"warmth":-4.0}"#.utf8),
+            forKey: SettingsStore.fillLightSettingsKey
+        )
+
+        XCTAssertEqual(try SettingsStore(defaults: defaults).fillLightSettings, .default)
+    }
 }

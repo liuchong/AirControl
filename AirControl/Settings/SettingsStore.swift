@@ -7,12 +7,14 @@ final class SettingsStore {
     static let displayIDKey = "aircontrol.display-id.v1"
     static let gazeAssistEnabledKey = "aircontrol.gaze-assist-enabled.v1"
     static let gazeProfileKey = "aircontrol.gaze-profile.v1"
+    static let fillLightSettingsKey = "aircontrol.fill-light-settings.v1"
 
     private let defaults: UserDefaults
     private(set) var settings: CoreSettings
     private(set) var didRecoverInvalidSettings = false
     private(set) var gazeAssistEnabled: Bool
     private(set) var gazeProfile: GazeProfile?
+    private(set) var fillLightSettings: FillLightSettings
 
     init(defaults: UserDefaults = .standard) throws {
         self.defaults = defaults
@@ -21,6 +23,10 @@ final class SettingsStore {
         }
         gazeProfile = decodedGazeProfile.flatMap { Self.isValidGazeProfile($0) ? $0 : nil }
         gazeAssistEnabled = defaults.bool(forKey: Self.gazeAssistEnabledKey) && gazeProfile != nil
+        let decodedFillLight = defaults.data(forKey: Self.fillLightSettingsKey).flatMap {
+            try? JSONDecoder().decode(FillLightSettings.self, from: $0)
+        }
+        fillLightSettings = decodedFillLight.flatMap { $0.isValid ? $0 : nil } ?? .default
         let fallback = try CoreSettings.rustDefaults()
         guard let data = defaults.data(forKey: Self.storageKey) else {
             settings = fallback
@@ -79,6 +85,14 @@ final class SettingsStore {
             defaults.set(data, forKey: Self.gazeProfileKey)
         } else {
             defaults.removeObject(forKey: Self.gazeProfileKey)
+        }
+    }
+
+    func saveFillLight(_ settings: FillLightSettings) {
+        let validated = settings.isValid ? settings : .default
+        fillLightSettings = validated
+        if let data = try? JSONEncoder().encode(validated) {
+            defaults.set(data, forKey: Self.fillLightSettingsKey)
         }
     }
 

@@ -25,6 +25,7 @@ struct HelpView: View {
                     row("左手伸出三指", "按住左键，移动右手掌心拖拽；收手即释放")
                     row("左手握拳保持", "暂停或恢复；右手握拳不会暂停")
                     row("视线辅助（需九点校准）", "双手离开画面时粗略移动光标；手进入后从当前位置精细控制")
+                    row("屏幕辅助光源", "用目标显示器边缘柔光改善面部照明；可调整亮度和冷暖色")
                     row("⌃⌥⌘A", "全局紧急停止")
                 }
                 Divider()
@@ -44,6 +45,10 @@ struct HelpView: View {
                 Text("抓窗仍只使用辅助功能权限来改变窗口位置，不读取窗口内容，也不需要屏幕录制权限。")
                     .foregroundStyle(.secondary)
                 Text("视线辅助只做粗定位，不会因眨眼产生点击。闭眼、丢脸或识别不可靠时光标保持原位；校准只保存数值系数，不保存人脸或眼部图像。")
+                    .foregroundStyle(.secondary)
+                Text("控制中开始九点校准时会先安全停止；校准成功且权限仍有效后自动恢复控制。取消、失败或权限失效不会误启动。")
+                    .foregroundStyle(.secondary)
+                Text("屏幕辅助光源不读取屏幕、不申请新权限，也不能关闭 macOS 的摄像头绿色隐私指示灯。")
                     .foregroundStyle(.secondary)
                 Text("摄像头和目标显示器选择会在下次启动时恢复；设备不再存在时会安全回退到系统首选设备。")
                     .foregroundStyle(.secondary)

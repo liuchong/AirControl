@@ -19,6 +19,10 @@ struct AirControlApp: App {
             Text(model.runState.title)
             Divider()
             Button(menuBarActionTitle) { model.toggleControl() }
+            Toggle("屏幕辅助光源", isOn: Binding(
+                get: { model.fillLightSettings.enabled },
+                set: { model.updateFillLight(enabled: $0) }
+            ))
             Button("显示主窗口") { NSApplication.shared.activate(ignoringOtherApps: true) }
             Button("退出 AirControl") {
                 model.safeStop()

@@ -100,6 +100,33 @@ struct MainView: View {
                 .padding(12)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
                 VStack(alignment: .leading, spacing: 8) {
+                    Toggle("屏幕辅助光源", isOn: Binding(
+                        get: { model.fillLightSettings.enabled },
+                        set: { model.updateFillLight(enabled: $0) }
+                    ))
+                    Text("在目标显示器边缘显示不抢焦点的柔光，改善普通摄像头前的人脸照明。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    HStack {
+                        Text("亮度")
+                        Slider(value: Binding(
+                            get: { model.fillLightSettings.brightness },
+                            set: { model.updateFillLight(brightness: $0) }
+                        ), in: 0.1...1.0)
+                    }
+                    HStack {
+                        Text("色温")
+                        Text("冷").font(.caption).foregroundStyle(.secondary)
+                        Slider(value: Binding(
+                            get: { model.fillLightSettings.warmth },
+                            set: { model.updateFillLight(warmth: $0) }
+                        ), in: -1.0...1.0)
+                        Text("暖").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                .padding(12)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+                VStack(alignment: .leading, spacing: 8) {
                     Text("启用的手势").fontWeight(.medium)
                     ForEach(GestureOption.allCases) { option in
                         Toggle(option.title, isOn: Binding(
