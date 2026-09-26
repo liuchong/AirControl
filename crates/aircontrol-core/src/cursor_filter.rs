@@ -22,18 +22,11 @@ impl CursorFilter {
             .map(|last| timestamp - last)
             .unwrap_or(MIN_FRAME_SECONDS)
             .clamp(MIN_FRAME_SECONDS, MAX_FRAME_SECONDS);
-        let displacement = (target.x - previous.x).hypot(target.y - previous.y);
-
-        // Small corrections are deliberately damped; deliberate movement gets a shorter
-        // time constant. The exponential step makes the response depend on elapsed time
-        // rather than how many camera frames happened to arrive.
-        let slow_time_constant = 0.20 - 0.16 * smoothing;
-        let fast_time_constant = slow_time_constant * 0.28;
-        // Ordinary pointing is only a few hundredths of the frame per sample.
-        // The fast response has to begin there; reserving it for very large
-        // jumps makes normal motion feel late and then catch up in steps.
-        let motion = (displacement / 0.08).clamp(0.0, 1.0);
-        let time_constant = slow_time_constant + (fast_time_constant - slow_time_constant) * motion;
+        // One time constant for every displacement. Switching to a faster
+        // response only for large steps made small motion feel stuck and then
+        // catch up as a jump. The step still depends on elapsed time, not on
+        // how many camera frames arrived.
+        let time_constant = 0.10 - 0.06 * smoothing;
         let alpha = 1.0 - (-elapsed / time_constant).exp();
 
         let filtered = Point::new(
@@ -70,12 +63,12 @@ mod tests {
         let jitter_ratio = (held.x - start.x) / 0.004;
 
         assert!(
-            move_ratio > jitter_ratio + 0.25,
-            "ordinary motion should catch up faster than jitter: move={move_ratio}, jitter={jitter_ratio}"
+            (move_ratio - jitter_ratio).abs() < 0.02,
+            "the same elapsed time must follow the same fraction of any step: move={move_ratio}, jitter={jitter_ratio}"
         );
         assert!(
-            jitter_ratio < 0.7,
-            "tiny jitter must remain damped, ratio={jitter_ratio}"
+            jitter_ratio < 0.8,
+            "a tenth of a second must not fully copy sensor noise, ratio={jitter_ratio}"
         );
     }
 }

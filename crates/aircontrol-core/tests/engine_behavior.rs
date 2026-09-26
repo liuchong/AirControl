@@ -81,12 +81,42 @@ fn pointer_stays_until_a_deliberate_move_then_tracks_from_the_current_cursor() {
         })
         .expect("raising the index moves the cursor");
     assert!(
-        raised_y < y,
-        "camera y grows downward, so a higher camera y must move the cursor down"
+        raised_y > y,
+        "a higher camera y is a higher finger, so the quartz cursor must rise"
     );
     assert!(
         x > 200.0 && (y - 450.0).abs() < 80.0,
         "tracking must leave the current cursor instead of jumping to a screen edge, got {x},{y}"
+    );
+}
+
+#[test]
+fn leaning_closer_does_not_speed_the_cursor_up() {
+    fn travel(second_mcp_y: f64) -> f64 {
+        let mut engine = Engine::new(Settings::default()).unwrap();
+        engine.rebase_pointer(720.0, 450.0).unwrap();
+        engine.clear_pointer_rebase();
+        engine.process(&pointer(0.00, 0.44, 0.62));
+        engine.process(&pointer(0.16, 0.44, 0.74));
+        let closer = pointer(0.32, 0.44, 0.90).with(
+            JointKind::MiddleMcp,
+            Point::new(0.53, second_mcp_y, 1.0),
+        );
+        let moved = engine.process(&closer);
+        moved
+            .iter()
+            .find_map(|command| match command {
+                Command::Move { y, .. } => Some((*y - 450.0).abs()),
+                _ => None,
+            })
+            .unwrap_or(0.0)
+    }
+
+    let seated = travel(0.44);
+    let closer = travel(0.72);
+    assert!(
+        closer < seated * 0.9,
+        "a larger palm is a closer hand and must slow the cursor: closer={closer}, seated={seated}"
     );
 }
 

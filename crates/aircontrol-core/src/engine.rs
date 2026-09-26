@@ -101,6 +101,7 @@ pub struct Engine {
     pointer_armed: bool,
     pointer_origin_hand: Option<Point>,
     pointer_origin_cursor: (f64, f64),
+    pointer_reference_palm: Option<f64>,
     identity: HandIdentity,
     overview: OverviewTracker,
     grab_hold_until_neutral: bool,
@@ -149,6 +150,7 @@ impl Engine {
             pointer_armed: false,
             pointer_origin_hand: None,
             pointer_origin_cursor: (0.0, 0.0),
+            pointer_reference_palm: None,
             identity: HandIdentity::default(),
             overview: OverviewTracker::default(),
             grab_hold_until_neutral: false,
@@ -399,7 +401,7 @@ impl Engine {
         {
             self.state = GestureState::Pointer;
             return self
-                .cursor_for(index_tip, timestamp)
+                .cursor_for(index_tip, timestamp, palm_size)
                 .map(|cursor| {
                     vec![Command::Move {
                         x: cursor.0,
@@ -683,7 +685,7 @@ impl Engine {
                     && evidence == PinchEvidence::Closed
                     && let Some(index_tip) = points.index_tip
                 {
-                    if let Some(cursor) = self.cursor_for(index_tip, timestamp) {
+                    if let Some(cursor) = self.cursor_for(index_tip, timestamp, points.palm_size()) {
                         return vec![Command::Move {
                             x: cursor.0,
                             y: cursor.1,
@@ -737,7 +739,12 @@ impl Engine {
         }
     }
 
-    fn cursor_for(&mut self, point: Point, timestamp: f64) -> Option<(f64, f64)> {
+    fn cursor_for(
+        &mut self,
+        point: Point,
+        timestamp: f64,
+        palm_size: Option<f64>,
+    ) -> Option<(f64, f64)> {
         let filtered = self
             .cursor_filter
             .update(point, timestamp, self.settings.smoothing);
@@ -748,26 +755,35 @@ impl Engine {
                 self.last_cursor = handoff.cursor_anchor;
                 return Some(handoff.cursor_anchor);
             };
+            let scale = self.distance_scale(palm_size);
             let screen = self.settings.screen;
-            let target = (
-                (handoff.cursor_anchor.0 - (filtered.x - hand_anchor.x) * screen.width * 0.45)
-                    .clamp(screen.origin_x, screen.origin_x + screen.width),
-                (handoff.cursor_anchor.1 - (filtered.y - hand_anchor.y) * screen.height * 0.45)
-                    .clamp(screen.origin_y, screen.origin_y + screen.height),
-            );
+            let target = self.clamp_to_screen((
+                handoff.cursor_anchor.0
+                    - (filtered.x - hand_anchor.x) * screen.width * 0.45 * scale,
+                handoff.cursor_anchor.1
+                    + (filtered.y - hand_anchor.y) * screen.height * 0.45 * scale,
+            ));
             self.last_cursor = target;
             return Some(target);
         }
-        self.engaged_cursor(filtered)
+        self.engaged_cursor(point, filtered, palm_size)
     }
 
     /// Keep the cursor still until the index tip travels past a deliberate
-    /// distance, then follow at the calibrated gain from the cursor's current
-    /// position. The first recognized point never teleports the pointer.
-    fn engaged_cursor(&mut self, filtered: Point) -> Option<(f64, f64)> {
-        let anchor = *self.pointer_anchor.get_or_insert(filtered);
+    /// distance, then follow from the cursor's current position. Movement that
+    /// would leave the screen is dropped, so the next motion is not stuck
+    /// paying back an off-screen debt. The first recognized point never
+    /// teleports the pointer.
+    fn engaged_cursor(
+        &mut self,
+        raw: Point,
+        filtered: Point,
+        palm_size: Option<f64>,
+    ) -> Option<(f64, f64)> {
+        let scale = self.distance_scale(palm_size);
+        let anchor = *self.pointer_anchor.get_or_insert(raw);
         if !self.pointer_armed {
-            if distance(filtered, anchor) < POINTER_ENGAGE_DISTANCE {
+            if distance(raw, anchor) < POINTER_ENGAGE_DISTANCE {
                 return None;
             }
             self.pointer_armed = true;
@@ -776,18 +792,43 @@ impl Engine {
         }
         let origin_hand = self.pointer_origin_hand.unwrap_or(filtered);
         let origin = self.pointer_origin_cursor;
-        let calibration = self.settings.calibration;
+        let (x_span, y_span) = self.motion_spans();
         let screen = self.settings.screen;
-        let x_span = (calibration.max_x - calibration.min_x).max(0.25);
-        let y_span = (calibration.max_y - calibration.min_y).max(0.20);
-        let target = (
-            (origin.0 - (filtered.x - origin_hand.x) / x_span * screen.width)
-                .clamp(screen.origin_x, screen.origin_x + screen.width),
-            (origin.1 - (filtered.y - origin_hand.y) / y_span * screen.height)
-                .clamp(screen.origin_y, screen.origin_y + screen.height),
-        );
+        let target = self.clamp_to_screen((
+            origin.0 - (filtered.x - origin_hand.x) / x_span * screen.width * scale,
+            origin.1 + (filtered.y - origin_hand.y) / y_span * screen.height * scale,
+        ));
+        self.pointer_origin_hand = Some(filtered);
+        self.pointer_origin_cursor = target;
         self.last_cursor = target;
         Some(target)
+    }
+
+    fn motion_spans(&self) -> (f64, f64) {
+        let calibration = self.settings.calibration;
+        (
+            (calibration.max_x - calibration.min_x).max(0.25),
+            (calibration.max_y - calibration.min_y).max(0.20),
+        )
+    }
+
+    /// The palm seen when control starts is the seated distance. A larger palm
+    /// means the hand moved closer to the camera, so the same posture must not
+    /// speed the cursor up. A smaller palm does the opposite, within a limit.
+    fn distance_scale(&mut self, palm_size: Option<f64>) -> f64 {
+        let Some(palm) = palm_size.filter(|palm| palm.is_finite() && *palm >= 0.05) else {
+            return 1.0;
+        };
+        let reference = *self.pointer_reference_palm.get_or_insert(palm);
+        (reference / palm).clamp(0.65, 1.45)
+    }
+
+    fn clamp_to_screen(&self, point: (f64, f64)) -> (f64, f64) {
+        let screen = self.settings.screen;
+        (
+            point.0.clamp(screen.origin_x, screen.origin_x + screen.width),
+            point.1.clamp(screen.origin_y, screen.origin_y + screen.height),
+        )
     }
 
     fn process_window_grab(
@@ -836,8 +877,9 @@ impl Engine {
                 }
             }
             WindowGrabAction::Move => {
-                if let Some(palm) = usable.and_then(HandPoints::stable_palm)
-                    && let Some(cursor) = self.window_cursor_for(palm, timestamp)
+                if let Some(points) = usable
+                    && let Some(palm) = points.stable_palm()
+                    && let Some(cursor) = self.window_cursor_for(palm, points.palm_size(), timestamp)
                 {
                     commands.push(Command::WindowMove {
                         x: cursor.0,
@@ -860,19 +902,27 @@ impl Engine {
         self.window_anchor_cursor = self.last_cursor;
     }
 
-    fn window_cursor_for(&mut self, palm: Point, timestamp: f64) -> Option<(f64, f64)> {
+    fn window_cursor_for(
+        &mut self,
+        palm: Point,
+        palm_size: Option<f64>,
+        timestamp: f64,
+    ) -> Option<(f64, f64)> {
         let anchor = self.window_anchor_palm?;
         let filtered = self.window_cursor_filter.update(palm, timestamp, 0.85);
-        let calibration = self.settings.calibration;
+        let (x_span, y_span) = self.motion_spans();
+        let scale = self.distance_scale(palm_size);
         let screen = self.settings.screen;
-        let x_span = (calibration.max_x - calibration.min_x).max(0.25);
-        let y_span = (calibration.max_y - calibration.min_y).max(0.20);
-        let x = (self.window_anchor_cursor.0 - (filtered.x - anchor.x) / x_span * screen.width)
-            .clamp(screen.origin_x, screen.origin_x + screen.width);
-        let y = (self.window_anchor_cursor.1 - (filtered.y - anchor.y) / y_span * screen.height)
-            .clamp(screen.origin_y, screen.origin_y + screen.height);
-        self.last_cursor = (x, y);
-        Some((x, y))
+        let target = self.clamp_to_screen((
+            self.window_anchor_cursor.0
+                - (filtered.x - anchor.x) / x_span * screen.width * scale,
+            self.window_anchor_cursor.1
+                + (filtered.y - anchor.y) / y_span * screen.height * scale,
+        ));
+        self.window_anchor_palm = Some(filtered);
+        self.window_anchor_cursor = target;
+        self.last_cursor = target;
+        Some(target)
     }
 
     fn initialize_relative_cursor(&mut self, palm: Point, timestamp: f64) {
@@ -898,15 +948,18 @@ impl Engine {
         );
         let anchor = self.assist_anchor_palm.expect("initialized above");
         let screen = self.settings.screen;
-        let x = (self.assist_anchor_cursor.0 - (filtered.x - anchor.x) * screen.width * gain)
-            .clamp(screen.origin_x, screen.origin_x + screen.width);
-        let y = (self.assist_anchor_cursor.1 - (filtered.y - anchor.y) * screen.height * gain)
-            .clamp(screen.origin_y, screen.origin_y + screen.height);
-        if (x - self.last_cursor.0).hypot(y - self.last_cursor.1) < 0.5 {
+        let target = self.clamp_to_screen((
+            self.assist_anchor_cursor.0 - (filtered.x - anchor.x) * screen.width * gain,
+            self.assist_anchor_cursor.1 + (filtered.y - anchor.y) * screen.height * gain,
+        ));
+        self.assist_anchor_palm = Some(filtered);
+        self.assist_anchor_cursor = target;
+        if (target.0 - self.last_cursor.0).hypot(target.1 - self.last_cursor.1) < 0.5 {
+            self.last_cursor = target;
             return None;
         }
-        self.last_cursor = (x, y);
-        Some((x, y))
+        self.last_cursor = target;
+        Some(target)
     }
 
     fn pointer_is_extended(&mut self, measurement: Option<bool>, timestamp: f64) -> bool {
@@ -985,6 +1038,7 @@ impl Engine {
         self.pointer_armed = false;
         self.pointer_origin_hand = None;
         self.pointer_origin_cursor = self.last_cursor;
+        self.pointer_reference_palm = None;
         self.reset_assist_anchors();
         self.window_grab.reset();
         self.reset_window_anchors();

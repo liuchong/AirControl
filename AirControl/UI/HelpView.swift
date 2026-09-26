@@ -12,7 +12,7 @@ struct HelpView: View {
                     Button("完成") { dismiss() }
                 }
                 Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 12) {
-                    row("伸出食指并明确移动", "从当前光标位置开始移动；刚进入画面时的小抖动不会带动光标")
+                    row("伸出食指并明确移动", "从当前光标位置跟着食指移动；手可以在任意位置和距离，靠近摄像头不会突然变快")
                     row("拇指与食指短捏", "锁定当前位置后左键单击")
                     row("拇指与食指持续捏合", "原位置按下，移动拖拽，松开结束")
                     row("拇指与中指短捏", "右键单击")

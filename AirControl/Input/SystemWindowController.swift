@@ -6,6 +6,12 @@ enum AccessibilityCoordinates {
     static func point(fromQuartz quartz: CGPoint, primaryHeight: CGFloat) -> CGPoint {
         CGPoint(x: quartz.x, y: primaryHeight - quartz.y)
     }
+
+    /// Quartz and `NSEvent.mouseLocation` grow upward from the bottom left.
+    /// `CGEvent` mouse positions grow downward from the top left of the primary display.
+    static func cgEventPoint(fromQuartz quartz: CGPoint, primaryHeight: CGFloat) -> CGPoint {
+        Self.point(fromQuartz: quartz, primaryHeight: primaryHeight)
+    }
 }
 
 struct WindowMoveSession: Equatable {

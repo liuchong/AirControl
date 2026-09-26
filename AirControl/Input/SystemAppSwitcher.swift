@@ -25,10 +25,16 @@ enum SystemAppSwitcher {
         } else {
             point = CGPoint(x: full.midX, y: full.minY + 1)
         }
+        let height = NSScreen.screens.first {
+            abs($0.frame.origin.x) < 0.5 && abs($0.frame.origin.y) < 0.5
+        }?.frame.height ?? point.y
         CGEvent(
             mouseEventSource: nil,
             mouseType: .mouseMoved,
-            mouseCursorPosition: point,
+            mouseCursorPosition: AccessibilityCoordinates.cgEventPoint(
+                fromQuartz: point,
+                primaryHeight: height
+            ),
             mouseButton: .left
         )?.post(tap: .cghidEventTap)
     }

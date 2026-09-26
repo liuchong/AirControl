@@ -15,6 +15,15 @@ final class WindowControllerTests: XCTestCase {
         )
     }
 
+    func testMouseEventPointUsesTheMeasuredPrimaryDisplayFlip() {
+        let point = AccessibilityCoordinates.cgEventPoint(
+            fromQuartz: CGPoint(x: 1245, y: 388),
+            primaryHeight: 1117
+        )
+        XCTAssertEqual(point.x, 1245, accuracy: 0.001)
+        XCTAssertEqual(point.y, 729, accuracy: 0.001)
+    }
+
     func testAccessibilityHitPointFlipsQuartzYAroundThePrimaryDisplay() {
         let point = AccessibilityCoordinates.point(
             fromQuartz: CGPoint(x: 120, y: 80),

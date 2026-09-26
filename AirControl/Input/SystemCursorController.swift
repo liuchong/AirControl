@@ -1,3 +1,4 @@
+import AppKit
 import ApplicationServices
 import CoreGraphics
 
@@ -44,7 +45,7 @@ final class SystemCursorController {
         switch command {
         case .move(let x, let y):
             let type: CGEventType = leftIsDown ? .leftMouseDragged : .mouseMoved
-            try postMouseOrThrow(type: type, position: CGPoint(x: x, y: y), button: .left)
+            try postMouseOrThrow(type: type, position: eventPosition(x, y), button: .left)
         case .click(let button, let x, let y, let count):
             let cgButton: CGMouseButton = button == .left ? .left : .right
             let downType: CGEventType = button == .left ? .leftMouseDown : .rightMouseDown
@@ -52,19 +53,19 @@ final class SystemCursorController {
             try postClickOrThrow(
                 downType: downType,
                 upType: upType,
-                position: CGPoint(x: x, y: y),
+                position: eventPosition(x, y),
                 button: cgButton,
                 count: count
             )
         case .mouseDown(let button, let x, let y):
             let cgButton: CGMouseButton = button == .left ? .left : .right
             let type: CGEventType = button == .left ? .leftMouseDown : .rightMouseDown
-            try postMouseOrThrow(type: type, position: CGPoint(x: x, y: y), button: cgButton)
+            try postMouseOrThrow(type: type, position: eventPosition(x, y), button: cgButton)
             if button == .left { leftIsDown = true } else { rightIsDown = true }
         case .mouseUp(let button, let x, let y):
             let cgButton: CGMouseButton = button == .left ? .left : .right
             let type: CGEventType = button == .left ? .leftMouseUp : .rightMouseUp
-            try postMouseOrThrow(type: type, position: CGPoint(x: x, y: y), button: cgButton)
+            try postMouseOrThrow(type: type, position: eventPosition(x, y), button: cgButton)
             if button == .left { leftIsDown = false } else { rightIsDown = false }
         case .scroll(let deltaY):
             guard let event = CGEvent(
@@ -81,7 +82,7 @@ final class SystemCursorController {
         case .windowMove(let x, let y):
             let point = CGPoint(x: x, y: y)
             if try windowController.move(to: point) {
-                try postMouseOrThrow(type: .mouseMoved, position: point, button: .left)
+                try postMouseOrThrow(type: .mouseMoved, position: eventPosition(point.x, point.y), button: .left)
             }
         case .windowGrabEnd:
             windowController.end()
@@ -107,6 +108,18 @@ final class SystemCursorController {
         up.setIntegerValueField(.mouseEventClickState, value: Int64(count))
         down.post(tap: .cghidEventTap)
         up.post(tap: .cghidEventTap)
+    }
+
+    private func eventPosition(_ x: Double, _ y: Double) -> CGPoint {
+        eventPosition(CGPoint(x: x, y: y))
+    }
+
+    private func eventPosition(_ quartz: CGPoint) -> CGPoint {
+        let height = NSScreen.screens.first {
+            abs($0.frame.origin.x) < 0.5 && abs($0.frame.origin.y) < 0.5
+        }?.frame.height ?? NSScreen.main?.frame.height ?? 0
+        guard height > 0 else { return quartz }
+        return AccessibilityCoordinates.cgEventPoint(fromQuartz: quartz, primaryHeight: height)
     }
 
     private func postMouseOrThrow(type: CGEventType, position: CGPoint, button: CGMouseButton) throws {
