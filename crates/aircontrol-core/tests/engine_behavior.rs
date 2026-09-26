@@ -72,6 +72,15 @@ fn pointer_stays_until_a_deliberate_move_then_tracks_from_the_current_cursor() {
         })
         .expect("a deliberate index move starts tracking");
     assert!(x < 720.0, "camera x must be mirrored");
+    let raised = engine.process(&pointer(0.28, 0.62, 0.82));
+    let raised_y = raised
+        .iter()
+        .find_map(|command| match command {
+            Command::Move { y, .. } => Some(*y),
+            _ => None,
+        })
+        .expect("raising the index moves the cursor");
+    assert!(raised_y > y, "hand moving up must move the cursor up");
     assert!(
         x > 200.0 && (y - 450.0).abs() < 80.0,
         "tracking must leave the current cursor instead of jumping to a screen edge, got {x},{y}"

@@ -752,7 +752,7 @@ impl Engine {
             let target = (
                 (handoff.cursor_anchor.0 - (filtered.x - hand_anchor.x) * screen.width * 0.45)
                     .clamp(screen.origin_x, screen.origin_x + screen.width),
-                (handoff.cursor_anchor.1 - (filtered.y - hand_anchor.y) * screen.height * 0.45)
+                (handoff.cursor_anchor.1 + (filtered.y - hand_anchor.y) * screen.height * 0.45)
                     .clamp(screen.origin_y, screen.origin_y + screen.height),
             );
             self.last_cursor = target;
@@ -783,7 +783,7 @@ impl Engine {
         let target = (
             (origin.0 - (filtered.x - origin_hand.x) / x_span * screen.width)
                 .clamp(screen.origin_x, screen.origin_x + screen.width),
-            (origin.1 - (filtered.y - origin_hand.y) / y_span * screen.height)
+            (origin.1 + (filtered.y - origin_hand.y) / y_span * screen.height)
                 .clamp(screen.origin_y, screen.origin_y + screen.height),
         );
         self.last_cursor = target;
@@ -863,10 +863,13 @@ impl Engine {
     fn window_cursor_for(&mut self, palm: Point, timestamp: f64) -> Option<(f64, f64)> {
         let anchor = self.window_anchor_palm?;
         let filtered = self.window_cursor_filter.update(palm, timestamp, 0.85);
+        let calibration = self.settings.calibration;
         let screen = self.settings.screen;
-        let x = (self.window_anchor_cursor.0 - (filtered.x - anchor.x) * screen.width)
+        let x_span = (calibration.max_x - calibration.min_x).max(0.25);
+        let y_span = (calibration.max_y - calibration.min_y).max(0.20);
+        let x = (self.window_anchor_cursor.0 - (filtered.x - anchor.x) / x_span * screen.width)
             .clamp(screen.origin_x, screen.origin_x + screen.width);
-        let y = (self.window_anchor_cursor.1 - (filtered.y - anchor.y) * screen.height)
+        let y = (self.window_anchor_cursor.1 + (filtered.y - anchor.y) / y_span * screen.height)
             .clamp(screen.origin_y, screen.origin_y + screen.height);
         self.last_cursor = (x, y);
         Some((x, y))
@@ -897,7 +900,7 @@ impl Engine {
         let screen = self.settings.screen;
         let x = (self.assist_anchor_cursor.0 - (filtered.x - anchor.x) * screen.width * gain)
             .clamp(screen.origin_x, screen.origin_x + screen.width);
-        let y = (self.assist_anchor_cursor.1 - (filtered.y - anchor.y) * screen.height * gain)
+        let y = (self.assist_anchor_cursor.1 + (filtered.y - anchor.y) * screen.height * gain)
             .clamp(screen.origin_y, screen.origin_y + screen.height);
         if (x - self.last_cursor.0).hypot(y - self.last_cursor.1) < 0.5 {
             return None;

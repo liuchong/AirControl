@@ -103,13 +103,9 @@ final class SystemWindowController {
 
     private func settableWindow(from element: AXUIElement) -> AXUIElement? {
         var current: AXUIElement? = element
-        let ownPID = ProcessInfo.processInfo.processIdentifier
         for _ in 0..<16 {
             guard let element = current else { return nil }
-            if pid(of: element) == ownPID { return nil }
-            if let window = referencedWindow(of: element),
-               positionIsSettable(for: window),
-               pid(of: window) != ownPID {
+            if let window = referencedWindow(of: element), positionIsSettable(for: window) {
                 return window
             }
             if isWindow(element), positionIsSettable(for: element) {
@@ -133,11 +129,10 @@ final class SystemWindowController {
         guard let list = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] else {
             return nil
         }
-        let ownPID = ProcessInfo.processInfo.processIdentifier
         for entry in list {
             let layer = (entry[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
             let pidValue = pid_t((entry[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? -1)
-            guard layer == 0, pidValue > 0, pidValue != ownPID,
+            guard layer == 0, pidValue > 0,
                   let bounds = Self.rect(entry[kCGWindowBounds as String]),
                   bounds.contains(axPoint) else {
                 continue

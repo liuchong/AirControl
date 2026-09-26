@@ -275,6 +275,71 @@ fn closing_that_takes_too_long_must_be_rearmed_from_an_open_palm() {
     );
 }
 
+#[test]
+fn raising_the_palm_moves_the_grab_up_at_the_pointer_gain() {
+    let mut engine = Engine::new(Settings::default()).unwrap();
+    complete_grab(&mut engine);
+    let held = engine.process(&fist(0.40));
+    let anchor_y = held
+        .iter()
+        .find_map(|command| match command {
+            Command::WindowMove { y, .. } => Some(*y),
+            _ => None,
+        })
+        .unwrap_or(450.0);
+
+    let mut raised_y = anchor_y;
+    for step in 1..=12 {
+        let frame = translate_y(fist(0.40 + step as f64 * 0.05), 0.08);
+        if let Some(y) = engine
+            .process(&frame)
+            .iter()
+            .find_map(|command| match command {
+                Command::WindowMove { y, .. } => Some(*y),
+                _ => None,
+            })
+        {
+            raised_y = y;
+        }
+    }
+
+    let expected = 450.0 + 0.08 / 0.80 * 900.0;
+    assert!(
+        raised_y > anchor_y + 40.0,
+        "raising the hand must move the window up, got {raised_y} from {anchor_y}"
+    );
+    assert!(
+        (raised_y - expected).abs() < 8.0,
+        "grab gain must match the pointer calibration, got {raised_y}, expected {expected}"
+    );
+}
+
+fn translate_y(frame: aircontrol_core::HandFrame, dy: f64) -> aircontrol_core::HandFrame {
+    use aircontrol_core::JointKind;
+    const KINDS: [JointKind; 16] = [
+        JointKind::Wrist,
+        JointKind::ThumbTip,
+        JointKind::IndexMcp,
+        JointKind::IndexPip,
+        JointKind::IndexTip,
+        JointKind::MiddleMcp,
+        JointKind::MiddlePip,
+        JointKind::MiddleTip,
+        JointKind::RingMcp,
+        JointKind::RingPip,
+        JointKind::RingTip,
+        JointKind::LittleMcp,
+        JointKind::LittlePip,
+        JointKind::LittleTip,
+        JointKind::ThumbMcp,
+        JointKind::ThumbIp,
+    ];
+    KINDS.into_iter().fold(frame, |frame, kind| match frame.point(kind, 0.0) {
+        Some(point) => frame.with(kind, Point::new(point.x, point.y + dy, point.confidence)),
+        None => frame,
+    })
+}
+
 fn complete_grab(engine: &mut Engine) {
     engine.rebase_pointer(720.0, 450.0).unwrap();
     engine.clear_pointer_rebase();
