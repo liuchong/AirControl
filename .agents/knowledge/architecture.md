@@ -1,6 +1,6 @@
 # AirControl 架构记录
 
-AirControl 使用单向链路：`AVCaptureSession` 摄像头帧 → Vision 手部与可选眼部关键点 → C 兼容接口 → Rust 手势/视线状态机 → 抽象鼠标/窗口命令 → 经权限门禁的 Core Graphics 鼠标投递器或 macOS 辅助功能窗口移动器。
+AirControl 使用单向链路：`AVCaptureSession` 摄像头帧 → Vision 手部关键点与头部轮廓，视线开启时另取瞳孔样本 → 手部和瞳孔进入 C 兼容接口，头部轮廓只留在预览 → Rust 手势/视线状态机 → 抽象鼠标/窗口命令 → 经权限门禁的 Core Graphics 鼠标投递器或 macOS 辅助功能窗口移动器。
 
 Rust crate 是平台无关业务规则的唯一实现，负责关键点校验、手势时序、坐标映射、平滑、校准、设置校验和安全释放。Swift 只负责 macOS 摄像头、Vision 转换、设备标识持久化、权限、命令投递和界面，不得复制 Rust 判断。
 

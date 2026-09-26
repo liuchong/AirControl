@@ -42,6 +42,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var cameraAuthorized = false
     @Published private(set) var accessibilityGranted = false
     @Published private(set) var detectedHands: [[StandardJoint]] = []
+    @Published private(set) var detectedHead: [FaceChain] = []
     @Published private(set) var lastGesture = "等待手势"
     @Published private(set) var calibrationMessage = ""
     @Published private(set) var calibrationProgress = 0.0
@@ -91,6 +92,7 @@ final class AppModel: ObservableObject {
                     self?.handleVisionSuccess(
                         timestamp: timestamp,
                         hands: observation.hands,
+                        head: observation.head,
                         gaze: observation.gaze
                     )
                 }
@@ -454,29 +456,36 @@ final class AppModel: ObservableObject {
     private func handleVisionSuccess(
         timestamp: Double,
         hands: [StandardHand],
+        head: [FaceChain],
         gaze: StandardGazeSample?
     ) {
-        detectedHands = hands.map(\.joints)
+        showDetections(hands: hands, head: head)
         switch visionFailureTracker.recordSuccess() {
         case .continueControl:
-            consume(timestamp: timestamp, hands: hands, gaze: gaze)
+            consume(timestamp: timestamp, hands: hands, head: head, gaze: gaze)
         case .remainSuspended:
             break
         case .resumeControl:
             visionSuspended = false
             if controlEnabled { runState = .controlling }
-            consume(timestamp: timestamp, hands: hands, gaze: gaze)
+            consume(timestamp: timestamp, hands: hands, head: head, gaze: gaze)
         case .forwardMissingFrame, .forwardMissingFrameAndSuspend:
             break
         }
     }
 
+    private func showDetections(hands: [StandardHand], head: [FaceChain]) {
+        detectedHands = hands.map(\.joints)
+        detectedHead = head
+    }
+
     private func consume(
         timestamp: Double,
         hands: [StandardHand],
+        head: [FaceChain],
         gaze: StandardGazeSample?
     ) {
-        detectedHands = hands.map(\.joints)
+        showDetections(hands: hands, head: head)
         if let gazeCalibration {
             do {
                 let event = try gazeCalibration.update(timestamp: timestamp, sample: gaze)
@@ -587,9 +596,9 @@ final class AppModel: ObservableObject {
         let action = visionFailureTracker.recordFailure()
         switch action {
         case .forwardMissingFrame:
-            consume(timestamp: timestamp, hands: [], gaze: nil)
+            consume(timestamp: timestamp, hands: [], head: [], gaze: nil)
         case .forwardMissingFrameAndSuspend:
-            consume(timestamp: timestamp, hands: [], gaze: nil)
+            consume(timestamp: timestamp, hands: [], head: [], gaze: nil)
             suspendForVisionRecovery(message: message)
         case .remainSuspended, .continueControl, .resumeControl:
             break

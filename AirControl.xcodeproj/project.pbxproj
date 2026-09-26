@@ -20,6 +20,7 @@
 		2EA1C322BE8935F0FF9EFA78 /* bimanual_double_click.json in Resources */ = {isa = PBXBuildFile; fileRef = 5C98D528A93CF2FD75A6FB32 /* bimanual_double_click.json */; };
 		2FF6CE27FBC7DBF0BFC01856 /* WindowControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64CF90C433E8DBA29FBFFB47 /* WindowControllerTests.swift */; };
 		3627533F5D1D765D73284B63 /* GazeGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EE40C448931A1CB2E67606E /* GazeGeometry.swift */; };
+		39B2AA1546D00B1C37225797 /* PreviewMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C40F4D2A537621BB9C6EAE8 /* PreviewMapping.swift */; };
 		4D3B655B3A4651280707D877 /* SystemCursorController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B102371891F88EA3DA5E8286 /* SystemCursorController.swift */; };
 		4E1461F5C63347DE3CEB181A /* AppRunStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65FCA38CC0A6F0A2C7FCE31E /* AppRunStateTests.swift */; };
 		56F0BC3FD1AFC1513E4C18B1 /* pointer_partial_landmarks.json in Resources */ = {isa = PBXBuildFile; fileRef = 11A1A9552A9E6976F6E51D5D /* pointer_partial_landmarks.json */; };
@@ -28,6 +29,7 @@
 		7B70CCF543DD3C62CDAFFA9A /* PlatformBehaviorIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13CF8BBE3E6AE5BD28147DEB /* PlatformBehaviorIntegrationTests.swift */; };
 		7D628271DDD315D9FC5AD63D /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F71A1F6C52C450CAE306EA /* AppModel.swift */; };
 		7E9AE6E95EA3CB66157827FC /* DisplaySelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68D18A19F4699AFA7CB03621 /* DisplaySelectionTests.swift */; };
+		801B739E3DA197EACF631492 /* PreviewAndHeadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A3E50FC768D66109EA1690C /* PreviewAndHeadTests.swift */; };
 		838996F47C550E0E59CE0336 /* CoreSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F32715C4648F5054363D8F /* CoreSettings.swift */; };
 		8D17C4122EBF837B77107820 /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5C7A234A9654619D760610 /* HelpView.swift */; };
 		8FCF4FD25AD240534D320A18 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 308AE2A768D437DE43978540 /* Assets.xcassets */; };
@@ -42,6 +44,7 @@
 		A4BC1E5D2C424FE1B59278F5 /* pinch_anchor.json in Resources */ = {isa = PBXBuildFile; fileRef = A2842051DA50163072D836D8 /* pinch_anchor.json */; };
 		A9B6E242B6ADB911FE24336A /* CalibrationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 502C97E80EDB9BEAB4D60724 /* CalibrationController.swift */; };
 		ABFAED984ACD7F49061A46E9 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 954CBA426AD3ADF8F382AAE7 /* README.md */; };
+		B0A96578F896BC7604AF2D6A /* HeadGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6CDBD2DD7B3C1C5B4432529 /* HeadGeometry.swift */; };
 		B183CA4DDA03246C45DBCC96 /* pinch_dropout.json in Resources */ = {isa = PBXBuildFile; fileRef = 8C802099DDEAC02C4678E287 /* pinch_dropout.json */; };
 		BAD7248E66B718759B67C44A /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A023DC10B56389D13633D04 /* SettingsStore.swift */; };
 		C5E20366C16F209B355E2AC6 /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD4F184F0BB31C343FDE301E /* SettingsStoreTests.swift */; };
@@ -107,8 +110,10 @@
 		64CF90C433E8DBA29FBFFB47 /* WindowControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowControllerTests.swift; sourceTree = "<group>"; };
 		65FCA38CC0A6F0A2C7FCE31E /* AppRunStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRunStateTests.swift; sourceTree = "<group>"; };
 		68D18A19F4699AFA7CB03621 /* DisplaySelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplaySelectionTests.swift; sourceTree = "<group>"; };
+		6C40F4D2A537621BB9C6EAE8 /* PreviewMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewMapping.swift; sourceTree = "<group>"; };
 		702145BF81CDFC16F32A46F3 /* CoreEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreEngine.swift; sourceTree = "<group>"; };
 		70C44411C9A08210DEFCD78F /* HandPoseEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandPoseEstimator.swift; sourceTree = "<group>"; };
+		7A3E50FC768D66109EA1690C /* PreviewAndHeadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewAndHeadTests.swift; sourceTree = "<group>"; };
 		7ABE48A3BD6B4ABE380B2476 /* bimanual_precision_click.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = bimanual_precision_click.json; sourceTree = "<group>"; };
 		7BAF3590423F0A614B9E1808 /* right_click.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = right_click.json; sourceTree = "<group>"; };
 		8C802099DDEAC02C4678E287 /* pinch_dropout.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = pinch_dropout.json; sourceTree = "<group>"; };
@@ -125,6 +130,7 @@
 		DE45A2F085CFBAE8D919853C /* FillLightSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FillLightSettings.swift; sourceTree = "<group>"; };
 		E2F71A1F6C52C450CAE306EA /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		F6A26CE5531EFC0E2EB146E4 /* window_grab.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = window_grab.json; sourceTree = "<group>"; };
+		F6CDBD2DD7B3C1C5B4432529 /* HeadGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadGeometry.swift; sourceTree = "<group>"; };
 		FD4F184F0BB31C343FDE301E /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -134,6 +140,7 @@
 			children = (
 				4EE40C448931A1CB2E67606E /* GazeGeometry.swift */,
 				70C44411C9A08210DEFCD78F /* HandPoseEstimator.swift */,
+				F6CDBD2DD7B3C1C5B4432529 /* HeadGeometry.swift */,
 			);
 			path = Vision;
 			sourceTree = "<group>";
@@ -186,6 +193,7 @@
 				49184971E0C81B2D889CFE9F /* FillLightOverlayTests.swift */,
 				5A2B01EB28A4A826AB96B02D /* GazeCalibrationResumePolicyTests.swift */,
 				218B13BD799002023E038D01 /* GazeGeometryTests.swift */,
+				7A3E50FC768D66109EA1690C /* PreviewAndHeadTests.swift */,
 				FD4F184F0BB31C343FDE301E /* SettingsStoreTests.swift */,
 				5F76F7FF96DE54C3325E7AA5 /* VisionFailureTrackerTests.swift */,
 				64CF90C433E8DBA29FBFFB47 /* WindowControllerTests.swift */,
@@ -232,6 +240,7 @@
 				9E442D347C2A2B4E943685E9 /* GazeCalibrationOverlay.swift */,
 				2D5C7A234A9654619D760610 /* HelpView.swift */,
 				4EB8E96F5BAB55716F815301 /* MainView.swift */,
+				6C40F4D2A537621BB9C6EAE8 /* PreviewMapping.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -450,6 +459,7 @@
 				9A1A2E4C7F59020B607638B1 /* FillLightOverlayTests.swift in Sources */,
 				0C872A5DF4B0C404ACFADCCD /* GazeCalibrationResumePolicyTests.swift in Sources */,
 				02B5EC66FB2F82A35EE9D1B7 /* GazeGeometryTests.swift in Sources */,
+				801B739E3DA197EACF631492 /* PreviewAndHeadTests.swift in Sources */,
 				C5E20366C16F209B355E2AC6 /* SettingsStoreTests.swift in Sources */,
 				CC46D75EBC4CB10A14E6FC7C /* VisionFailureTrackerTests.swift in Sources */,
 				2FF6CE27FBC7DBF0BFC01856 /* WindowControllerTests.swift in Sources */,
@@ -477,9 +487,11 @@
 				3627533F5D1D765D73284B63 /* GazeGeometry.swift in Sources */,
 				93084A5FEC067F1A4E979788 /* GlobalHotKey.swift in Sources */,
 				9DDEE2A913D147741A19A836 /* HandPoseEstimator.swift in Sources */,
+				B0A96578F896BC7604AF2D6A /* HeadGeometry.swift in Sources */,
 				8D17C4122EBF837B77107820 /* HelpView.swift in Sources */,
 				F645FE847DD2AB0E6985F1D5 /* MainView.swift in Sources */,
 				D7C30758538A557E367D900C /* PermissionManager.swift in Sources */,
+				39B2AA1546D00B1C37225797 /* PreviewMapping.swift in Sources */,
 				BAD7248E66B718759B67C44A /* SettingsStore.swift in Sources */,
 				0481BB19AE68BDA2E063D02E /* SystemAppSwitcher.swift in Sources */,
 				4D3B655B3A4651280707D877 /* SystemCursorController.swift in Sources */,

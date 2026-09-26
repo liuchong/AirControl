@@ -20,6 +20,7 @@ struct MainView: View {
             CameraPreview(
                 session: model.camera.session,
                 hands: model.detectedHands,
+                head: model.detectedHead,
                 showsImage: model.showsCameraImage
             )
             if !model.showsCameraImage {

@@ -20,17 +20,13 @@ final class HandPoseEstimator: @unchecked Sendable {
 
     func detect(in sampleBuffer: CMSampleBuffer) throws -> VisionFrameObservation {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-            return VisionFrameObservation(hands: [], gaze: nil)
+            return VisionFrameObservation(hands: [], head: [], gaze: nil)
         }
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .up)
         stateLock.lock()
         let includeGaze = gazeEnabled
         stateLock.unlock()
-        if includeGaze {
-            try handler.perform([handRequest, faceRequest])
-        } else {
-            try handler.perform([handRequest])
-        }
+        try handler.perform([handRequest, faceRequest])
         let observations = handRequest.results ?? []
 
         let mapping: [(StandardJoint.Kind, VNHumanHandPoseObservation.JointName)] = [
@@ -58,7 +54,47 @@ final class HandPoseEstimator: @unchecked Sendable {
             }
             return StandardHand(handedness: handedness, joints: joints)
         }
-        return VisionFrameObservation(hands: hands, gaze: includeGaze ? gazeSample() : nil)
+        let imageWidth = CVPixelBufferGetWidth(pixelBuffer)
+        let imageHeight = CVPixelBufferGetHeight(pixelBuffer)
+        return VisionFrameObservation(
+            hands: hands,
+            head: headChains(imageWidth: imageWidth, imageHeight: imageHeight),
+            gaze: includeGaze ? gazeSample() : nil
+        )
+    }
+
+    private func headChains(imageWidth: Int, imageHeight: Int) -> [FaceChain] {
+        guard let face = faceRequest.results?.max(by: {
+            $0.boundingBox.width * $0.boundingBox.height < $1.boundingBox.width * $1.boundingBox.height
+        }),
+        let landmarks = face.landmarks else { return [] }
+        let box = face.boundingBox
+        let confidence = Double(face.confidence)
+        let regions: [(VNFaceLandmarkRegion2D?, Bool)] = [
+            (landmarks.faceContour, false),
+            (landmarks.leftEyebrow, false),
+            (landmarks.rightEyebrow, false),
+            (landmarks.leftEye, true),
+            (landmarks.rightEye, true),
+            (landmarks.nose, false),
+            (landmarks.noseCrest, false),
+            (landmarks.medianLine, false),
+            (landmarks.outerLips, true),
+            (landmarks.innerLips, true),
+            (landmarks.leftPupil, false),
+            (landmarks.rightPupil, false)
+        ]
+        return regions.compactMap { region, closed in
+            guard let region, !region.normalizedPoints.isEmpty else { return nil }
+            return HeadGeometry.chain(
+                landmarks: region.normalizedPoints,
+                faceBox: box,
+                imageWidth: imageWidth,
+                imageHeight: imageHeight,
+                confidence: confidence,
+                closed: closed
+            )
+        }
     }
 
     private func gazeSample() -> StandardGazeSample? {
@@ -82,5 +118,6 @@ final class HandPoseEstimator: @unchecked Sendable {
 
 struct VisionFrameObservation: Sendable {
     let hands: [StandardHand]
+    let head: [FaceChain]
     let gaze: StandardGazeSample?
 }
