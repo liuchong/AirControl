@@ -76,6 +76,10 @@ impl HandsFrame {
     pub fn controlling_hand(&self) -> Option<&HandFrame> {
         self.right.as_ref().or(self.unknown.as_ref())
     }
+
+    pub fn unknown(&self) -> Option<&HandFrame> {
+        self.unknown.as_ref()
+    }
 }
 
 impl Point {

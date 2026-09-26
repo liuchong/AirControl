@@ -13,7 +13,7 @@ use aircontrol_core::ffi::{
 
 #[test]
 fn abi_version_is_explicit_and_stable() {
-    assert_eq!(ABI_VERSION, 4);
+    assert_eq!(ABI_VERSION, 5);
     assert_eq!(ac_abi_version(), ABI_VERSION);
 }
 

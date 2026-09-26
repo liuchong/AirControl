@@ -122,6 +122,13 @@ pub fn left_fist(timestamp: f64) -> HandFrame {
         .with(JointKind::ThumbTip, Point::new(0.53, 0.45, 1.0))
 }
 
+pub fn aside(frame: HandFrame) -> HandFrame {
+    let wrist = frame
+        .point(JointKind::Wrist, 0.0)
+        .unwrap_or(Point::new(0.50, 0.20, 1.0));
+    frame.with(JointKind::Wrist, Point::new(wrist.x - 0.30, wrist.y, wrist.confidence))
+}
+
 pub fn shifted_palm(mut frame: HandFrame, x: f64, y: f64) -> HandFrame {
     frame = frame.with(JointKind::Wrist, Point::new(x, y, 1.0));
     frame.with(JointKind::MiddleMcp, Point::new(x + 0.03, y + 0.24, 1.0))

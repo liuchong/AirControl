@@ -69,6 +69,7 @@ enum CoreCommand: Equatable, Sendable {
     case windowGrabBegin(x: Double, y: Double)
     case windowMove(x: Double, y: Double)
     case windowGrabEnd
+    case showAppOverview
 
     var kindCode: UInt32 {
         switch self {
@@ -82,6 +83,7 @@ enum CoreCommand: Equatable, Sendable {
         case .windowGrabBegin: 8
         case .windowMove: 9
         case .windowGrabEnd: 10
+        case .showAppOverview: 11
         }
     }
 }
@@ -100,7 +102,7 @@ final class CoreEngine {
 
     init(settings: CoreSettings) throws {
         let version = ac_abi_version()
-        guard version == 4 else { throw CoreEngineError.incompatibleABI(version) }
+        guard version == 5 else { throw CoreEngineError.incompatibleABI(version) }
         var ffiSettings = settings.ffiValue
         var newHandle: OpaquePointer?
         let status = ac_engine_create(&ffiSettings, &newHandle)
@@ -199,6 +201,8 @@ final class CoreEngine {
             return .windowMove(x: command.x, y: command.y)
         case 10:
             return .windowGrabEnd
+        case 11:
+            return .showAppOverview
         default:
             throw CoreEngineError.invalidCommand(command.kind)
         }

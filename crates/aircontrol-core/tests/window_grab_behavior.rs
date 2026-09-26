@@ -3,7 +3,7 @@ mod support;
 use aircontrol_core::{
     AssistMode, Command, Engine, Handedness, HandsFrame, JointKind, Point, Settings,
 };
-use support::{fist, hands, open_palm, shifted_palm, three_fingers, unknown_hand};
+use support::{aside, fist, hands, open_palm, shifted_palm, three_fingers, unknown_hand};
 
 #[test]
 fn isolated_right_fist_never_starts_window_grab_or_pauses() {
@@ -159,12 +159,12 @@ fn unknown_hand_and_active_left_assist_cannot_arm_window_grab() {
     let mut assisted_engine = Engine::new(Settings::default()).unwrap();
     assisted_engine.process_hands(&hands(
         0.00,
-        Some(three_fingers(0.00)),
+        Some(aside(three_fingers(0.00))),
         Some(open_palm(0.00)),
     ));
     assisted_engine.process_hands(&hands(
         0.13,
-        Some(three_fingers(0.13)),
+        Some(aside(three_fingers(0.13))),
         Some(open_palm(0.13)),
     ));
     assert_eq!(assisted_engine.assist_mode(), AssistMode::Drag);
@@ -177,7 +177,7 @@ fn unknown_hand_and_active_left_assist_cannot_arm_window_grab() {
     .flat_map(|(timestamp, right)| {
         assisted_engine.process_hands(&hands(
             timestamp,
-            Some(three_fingers(timestamp)),
+            Some(aside(three_fingers(timestamp))),
             Some(right),
         ))
     })

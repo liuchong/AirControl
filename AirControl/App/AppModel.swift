@@ -651,6 +651,7 @@ final class AppModel: ObservableObject {
         case .windowGrabBegin: "抓住窗口"
         case .windowMove: "移动窗口"
         case .windowGrabEnd: "松开窗口"
+        case .showAppOverview: "打开应用调度台"
         case .pauseChanged(let paused): paused ? "左手握拳暂停" : "左手握拳恢复"
         case .assistChanged(let mode):
             switch mode {

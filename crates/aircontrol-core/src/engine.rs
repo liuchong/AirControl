@@ -8,6 +8,8 @@ use crate::{
         GESTURE_SECONDARY_CLICK,
     },
     window_grab::{WindowGrabAction, WindowGrabTracker},
+    identity::HandIdentity,
+    overview::{OverviewTracker, RisingHand},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -56,6 +58,7 @@ pub enum Command {
         y: f64,
     },
     WindowGrabEnd,
+    ShowAppOverview,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -98,6 +101,9 @@ pub struct Engine {
     pointer_armed: bool,
     pointer_origin_hand: Option<Point>,
     pointer_origin_cursor: (f64, f64),
+    identity: HandIdentity,
+    overview: OverviewTracker,
+    grab_hold_until_neutral: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -143,6 +149,9 @@ impl Engine {
             pointer_armed: false,
             pointer_origin_hand: None,
             pointer_origin_cursor: (0.0, 0.0),
+            identity: HandIdentity::default(),
+            overview: OverviewTracker::default(),
+            grab_hold_until_neutral: false,
         })
     }
 
@@ -160,6 +169,8 @@ impl Engine {
     }
 
     pub fn process_hands(&mut self, frame: &HandsFrame) -> Vec<Command> {
+        let stabilized = self.identity.update(frame);
+        let frame = &stabilized.frame;
         let timestamp = frame.timestamp;
         let left = frame
             .left()
@@ -183,23 +194,46 @@ impl Engine {
             return Vec::new();
         }
 
-        let observed_assist = left.and_then(|points| {
-            points.has_signal().then_some(if left_is_fist {
-                AssistMode::None
-            } else {
-                points.assist_mode()
+        let overview = self.overview.update(
+            timestamp,
+            rising_hand(frame.left(), self.settings.minimum_confidence),
+            rising_hand(frame.right(), self.settings.minimum_confidence),
+            stabilized.overlapped,
+        );
+        if overview.show {
+            self.grab_hold_until_neutral = true;
+            self.window_grab.reset();
+            self.reset_window_anchors();
+        }
+        if overview.suppress {
+            return Vec::new();
+        }
+
+        let observed_assist = if stabilized.overlapped {
+            Some(self.assist_tracker.active())
+        } else {
+            left.and_then(|points| {
+                points.has_signal().then_some(if left_is_fist {
+                    AssistMode::None
+                } else {
+                    points.assist_mode()
+                })
             })
-        });
+        };
 
         let mut commands = Vec::new();
+        if overview.show {
+            commands.push(Command::ShowAppOverview);
+        }
         if let Some(transition) = self.assist_tracker.update(timestamp, observed_assist) {
             commands.extend(self.apply_assist_transition(transition, right, timestamp));
         }
 
         let mut mode_commands = match self.assist_tracker.active() {
             AssistMode::None => {
+                let grab_allowed = frame.right().is_some() && !self.grab_is_held(right);
                 let (window_commands, suppress_standard) =
-                    self.process_window_grab(right, timestamp, frame.right().is_some());
+                    self.process_window_grab(right, timestamp, grab_allowed);
                 if suppress_standard {
                     window_commands
                 } else {
@@ -245,11 +279,25 @@ impl Engine {
         let commands = self.release_commands();
         self.reset_right_state();
         self.assist_tracker.clear();
+        self.identity.reset();
+        self.overview.reset();
+        self.grab_hold_until_neutral = false;
         self.paused = false;
         self.left_fist_started_at = None;
         self.left_fist_latched = false;
         self.state = GestureState::NoHand;
         commands
+    }
+
+    fn grab_is_held(&mut self, right: Option<HandPoints>) -> bool {
+        if !self.grab_hold_until_neutral {
+            return false;
+        }
+        let still_open = right.is_some_and(|points| points.extended_finger_count() == Some(4));
+        if !still_open {
+            self.grab_hold_until_neutral = false;
+        }
+        still_open
     }
 
     fn gesture_enabled(&self, gesture: u32) -> bool {
@@ -1242,6 +1290,14 @@ fn finger_geometry(mcp: Point, pip: Point, tip: Point) -> Option<(f64, f64, f64)
 }
 
 const POINTER_ENGAGE_DISTANCE: f64 = 0.045;
+
+fn rising_hand(frame: Option<&HandFrame>, confidence: f64) -> Option<RisingHand> {
+    let points = HandPoints::from_frame(frame?, confidence);
+    Some(RisingHand {
+        wrist: points.wrist?,
+        open: points.extended_finger_count() == Some(4),
+    })
+}
 
 fn distance(a: Point, b: Point) -> f64 {
     (a.x - b.x).hypot(a.y - b.y)

@@ -8,7 +8,7 @@ use crate::{
     GazeSample, HandFrame, Handedness, HandsFrame, JointKind, Point, ScreenRect, Settings,
 };
 
-pub const ABI_VERSION: u32 = 4;
+pub const ABI_VERSION: u32 = 5;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u32)]
@@ -881,6 +881,10 @@ impl From<Command> for ACCommand {
             },
             Command::WindowGrabEnd => Self {
                 kind: 10,
+                ..Self::default()
+            },
+            Command::ShowAppOverview => Self {
+                kind: 11,
                 ..Self::default()
             },
         }

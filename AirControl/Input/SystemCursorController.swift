@@ -85,6 +85,8 @@ final class SystemCursorController {
             }
         case .windowGrabEnd:
             windowController.end()
+        case .showAppOverview:
+            SystemAppSwitcher.show()
         case .pauseChanged, .assistChanged:
             break
         }
