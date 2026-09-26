@@ -15,6 +15,14 @@ final class WindowControllerTests: XCTestCase {
         )
     }
 
+    func testAccessibilityHitPointFlipsQuartzYAroundThePrimaryDisplay() {
+        let point = AccessibilityCoordinates.point(
+            fromQuartz: CGPoint(x: 120, y: 80),
+            primaryHeight: 900
+        )
+        XCTAssertEqual(point, CGPoint(x: 120, y: 820))
+    }
+
     func testMoveSessionSupportsNegativeGlobalCoordinates() {
         let session = WindowMoveSession(
             windowOrigin: CGPoint(x: -900, y: 40),

@@ -760,7 +760,7 @@ impl Engine {
         match update.action {
             WindowGrabAction::None => {}
             WindowGrabAction::Arm => {
-                if let Some(palm) = usable.and_then(HandPoints::palm_center) {
+                if let Some(palm) = usable.and_then(HandPoints::stable_palm) {
                     self.initialize_window_cursor(palm, timestamp);
                 } else {
                     self.window_grab.reset();
@@ -769,7 +769,7 @@ impl Engine {
                 }
             }
             WindowGrabAction::Begin => {
-                if let Some(palm) = usable.and_then(HandPoints::palm_center) {
+                if let Some(palm) = usable.and_then(HandPoints::stable_palm) {
                     self.initialize_window_cursor(palm, timestamp);
                     commands.push(Command::WindowGrabBegin {
                         x: self.window_anchor_cursor.0,
@@ -782,7 +782,7 @@ impl Engine {
                 }
             }
             WindowGrabAction::Move => {
-                if let Some(palm) = usable.and_then(HandPoints::palm_center)
+                if let Some(palm) = usable.and_then(HandPoints::stable_palm)
                     && let Some(cursor) = self.window_cursor_for(palm, timestamp)
                 {
                     commands.push(Command::WindowMove {
@@ -801,30 +801,19 @@ impl Engine {
 
     fn initialize_window_cursor(&mut self, palm: Point, timestamp: f64) {
         self.window_cursor_filter.reset();
-        let filtered = self.window_cursor_filter.update(
-            palm,
-            timestamp,
-            (self.settings.smoothing * 0.65).clamp(0.05, 1.0),
-        );
+        let filtered = self.window_cursor_filter.update(palm, timestamp, 0.85);
         self.window_anchor_palm = Some(filtered);
         self.window_anchor_cursor = self.last_cursor;
     }
 
     fn window_cursor_for(&mut self, palm: Point, timestamp: f64) -> Option<(f64, f64)> {
         let anchor = self.window_anchor_palm?;
-        let filtered = self.window_cursor_filter.update(
-            palm,
-            timestamp,
-            (self.settings.smoothing * 0.65).clamp(0.05, 1.0),
-        );
+        let filtered = self.window_cursor_filter.update(palm, timestamp, 0.85);
         let screen = self.settings.screen;
         let x = (self.window_anchor_cursor.0 - (filtered.x - anchor.x) * screen.width)
             .clamp(screen.origin_x, screen.origin_x + screen.width);
         let y = (self.window_anchor_cursor.1 - (filtered.y - anchor.y) * screen.height)
             .clamp(screen.origin_y, screen.origin_y + screen.height);
-        if (x - self.last_cursor.0).hypot(y - self.last_cursor.1) < 0.5 {
-            return None;
-        }
         self.last_cursor = (x, y);
         Some((x, y))
     }
@@ -1019,6 +1008,28 @@ impl HandPoints {
 
     fn palm_size(self) -> Option<f64> {
         Some(distance(self.wrist?, self.middle_mcp?).max(0.05))
+    }
+
+    fn stable_palm(self) -> Option<Point> {
+        let wrist = self.wrist?;
+        let knuckles = [
+            self.index_mcp, self.middle_mcp, self.ring_mcp, self.little_mcp,
+        ]
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+        if knuckles.is_empty() {
+            return Some(wrist);
+        }
+        let count = knuckles.len() as f64;
+        let (x, y, confidence) = knuckles.iter().fold((0.0, 0.0, 0.0), |sum, point| {
+            (sum.0 + point.x, sum.1 + point.y, sum.2 + point.confidence)
+        });
+        Some(Point::new(
+            wrist.x * 0.75 + (x / count) * 0.25,
+            wrist.y * 0.75 + (y / count) * 0.25,
+            wrist.confidence.min(confidence / count),
+        ))
     }
 
     fn palm_center(self) -> Option<Point> {
