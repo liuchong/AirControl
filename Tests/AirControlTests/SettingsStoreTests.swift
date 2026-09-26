@@ -28,6 +28,19 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(try CoreSettings.rustDefaults().enabledGestures, 0b1_1111)
     }
 
+    func testCameraImagePreviewDefaultsOffAndPersists() throws {
+        let suiteName = "AirControlTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = try SettingsStore(defaults: defaults)
+
+        XCTAssertFalse(store.showsCameraImage)
+        store.saveShowsCameraImage(true)
+        XCTAssertTrue(try SettingsStore(defaults: defaults).showsCameraImage)
+        store.saveShowsCameraImage(false)
+        XCTAssertFalse(try SettingsStore(defaults: defaults).showsCameraImage)
+    }
+
     func testPlatformDeviceIdentifiersPersistAndCanBeCleared() throws {
         let suiteName = "AirControlTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

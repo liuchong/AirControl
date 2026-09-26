@@ -51,6 +51,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var gazeCalibrationStage = 0
     @Published private(set) var gazeCalibrationProgress = 0.0
     @Published private(set) var fillLightSettings = FillLightSettings.default
+    @Published private(set) var showsCameraImage = false
     @Published var selectedCameraID: String?
     @Published var selectedDisplayID: CGDirectDisplayID?
     @Published var showingHelp = false
@@ -126,6 +127,7 @@ final class AppModel: ObservableObject {
             gazeAssistEnabled = store.gazeAssistEnabled
             gazeCalibrated = store.gazeProfile != nil
             fillLightSettings = store.fillLightSettings
+            showsCameraImage = store.showsCameraImage
             fillLightOverlay.apply(settings: fillLightSettings, displayID: selectedDisplayID)
             if gazeAssistEnabled {
                 try rebuildGazeMapper(using: store.settings)
@@ -286,6 +288,11 @@ final class AppModel: ObservableObject {
     }
 
     var smoothing: Double { settingsStore?.settings.smoothing ?? 0.32 }
+
+    func setShowsCameraImage(_ shows: Bool) {
+        showsCameraImage = shows
+        settingsStore?.saveShowsCameraImage(shows)
+    }
 
     func updateFillLight(enabled: Bool? = nil, brightness: Double? = nil, warmth: Double? = nil) {
         guard let store = settingsStore else { return }

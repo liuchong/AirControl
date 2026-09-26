@@ -8,6 +8,7 @@ final class SettingsStore {
     static let gazeAssistEnabledKey = "aircontrol.gaze-assist-enabled.v1"
     static let gazeProfileKey = "aircontrol.gaze-profile.v1"
     static let fillLightSettingsKey = "aircontrol.fill-light-settings.v1"
+    static let showsCameraImageKey = "aircontrol.shows-camera-image.v1"
 
     private let defaults: UserDefaults
     private(set) var settings: CoreSettings
@@ -15,6 +16,7 @@ final class SettingsStore {
     private(set) var gazeAssistEnabled: Bool
     private(set) var gazeProfile: GazeProfile?
     private(set) var fillLightSettings: FillLightSettings
+    private(set) var showsCameraImage: Bool
 
     init(defaults: UserDefaults = .standard) throws {
         self.defaults = defaults
@@ -27,6 +29,7 @@ final class SettingsStore {
             try? JSONDecoder().decode(FillLightSettings.self, from: $0)
         }
         fillLightSettings = decodedFillLight.flatMap { $0.isValid ? $0 : nil } ?? .default
+        showsCameraImage = defaults.object(forKey: Self.showsCameraImageKey) as? Bool ?? false
         let fallback = try CoreSettings.rustDefaults()
         guard let data = defaults.data(forKey: Self.storageKey) else {
             settings = fallback
@@ -86,6 +89,11 @@ final class SettingsStore {
         } else {
             defaults.removeObject(forKey: Self.gazeProfileKey)
         }
+    }
+
+    func saveShowsCameraImage(_ shows: Bool) {
+        showsCameraImage = shows
+        defaults.set(shows, forKey: Self.showsCameraImageKey)
     }
 
     func saveFillLight(_ settings: FillLightSettings) {

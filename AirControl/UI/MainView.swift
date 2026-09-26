@@ -18,8 +18,19 @@ struct MainView: View {
     private var preview: some View {
         ZStack(alignment: .topLeading) {
             Color.black
-            CameraPreview(session: model.camera.session)
+            if model.showsCameraImage {
+                CameraPreview(session: model.camera.session)
+            }
             JointOverlay(joints: model.detectedJoints)
+            if !model.showsCameraImage {
+                VStack {
+                    Spacer()
+                    Text("只显示识别点")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.55))
+                        .padding(.bottom, 18)
+                }
+            }
             VStack(alignment: .leading, spacing: 6) {
                 Label(model.runState.title, systemImage: statusIcon)
                     .font(.headline)
@@ -54,6 +65,13 @@ struct MainView: View {
                     granted: model.accessibilityGranted,
                     action: { PermissionManager.openAccessibilitySettings() }
                 )
+                Toggle("显示摄像头画面", isOn: Binding(
+                    get: { model.showsCameraImage },
+                    set: { model.setShowsCameraImage($0) }
+                ))
+                Text("默认只显示识别到的点。打开后才显示摄像头画面；系统绿色隐私灯仍会亮。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 Picker("摄像头", selection: Binding(
                     get: { model.selectedCameraID },
                     set: { id in Task { await model.selectCamera(id) } }
