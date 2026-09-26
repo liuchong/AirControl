@@ -41,7 +41,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var runState: RunState = .idle
     @Published private(set) var cameraAuthorized = false
     @Published private(set) var accessibilityGranted = false
-    @Published private(set) var detectedJoints: [StandardJoint] = []
+    @Published private(set) var detectedHands: [[StandardJoint]] = []
     @Published private(set) var lastGesture = "等待手势"
     @Published private(set) var calibrationMessage = ""
     @Published private(set) var calibrationProgress = 0.0
@@ -456,7 +456,7 @@ final class AppModel: ObservableObject {
         hands: [StandardHand],
         gaze: StandardGazeSample?
     ) {
-        detectedJoints = hands.flatMap(\.joints)
+        detectedHands = hands.map(\.joints)
         switch visionFailureTracker.recordSuccess() {
         case .continueControl:
             consume(timestamp: timestamp, hands: hands, gaze: gaze)
@@ -476,7 +476,7 @@ final class AppModel: ObservableObject {
         hands: [StandardHand],
         gaze: StandardGazeSample?
     ) {
-        detectedJoints = hands.flatMap(\.joints)
+        detectedHands = hands.map(\.joints)
         if let gazeCalibration {
             do {
                 let event = try gazeCalibration.update(timestamp: timestamp, sample: gaze)

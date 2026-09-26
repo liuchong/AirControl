@@ -17,11 +17,11 @@ struct MainView: View {
 
     private var preview: some View {
         ZStack(alignment: .topLeading) {
-            Color.black
-            if model.showsCameraImage {
-                CameraPreview(session: model.camera.session)
-            }
-            JointOverlay(joints: model.detectedJoints)
+            CameraPreview(
+                session: model.camera.session,
+                hands: model.detectedHands,
+                showsImage: model.showsCameraImage
+            )
             if !model.showsCameraImage {
                 VStack {
                     Spacer()

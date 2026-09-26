@@ -30,7 +30,7 @@ struct HelpView: View {
                 }
                 Divider()
                 Text("权限与隐私").font(.headline)
-                Text("摄像头画面只在内存中由 Apple Vision 处理，不保存、不上传，也不会启用麦克风。主窗口默认只显示识别点；需要时可以打开“显示摄像头画面”。辅助功能权限只用于投递鼠标事件。系统仍会显示摄像头绿色隐私灯。")
+                Text("摄像头画面只在内存中由 Apple Vision 处理，不保存、不上传，也不会启用麦克风。主窗口默认只显示识别点，并按镜子方向排列，举起右手时点出现在画面右侧。需要时可以打开“显示摄像头画面”。辅助功能权限只用于投递鼠标事件。系统仍会显示摄像头绿色隐私灯。")
                     .foregroundStyle(.secondary)
                 Text("信号丢失、权限撤销、摄像头中断、停用或退出时，AirControl 会释放正在按住的鼠标键。")
                     .foregroundStyle(.secondary)
