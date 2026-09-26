@@ -137,10 +137,22 @@ fn external_gaze_anchor_hands_off_to_relative_pointer_without_a_jump() {
     assert!((y - 360.0).abs() < 1.0);
 
     engine.clear_pointer_rebase();
-    let absolute = engine.process(&pointer(0.20, 0.34, 0.80));
+    let held = engine.process(&pointer(0.20, 0.34, 0.80));
     assert!(
-        absolute
-            .iter()
-            .any(|command| matches!(command, Command::Move { .. }))
+        held.iter()
+            .all(|command| !matches!(command, Command::Move { .. })),
+        "leaving gaze mode must not jump to the absolute finger position"
+    );
+    let moved = engine.process(&pointer(0.32, 0.52, 0.80));
+    let (x, y) = moved
+        .iter()
+        .find_map(|command| match command {
+            Command::Move { x, y } => Some((*x, *y)),
+            _ => None,
+        })
+        .expect("deliberate motion continues from the gaze cursor");
+    assert!(
+        (x - 640.0).abs() < 500.0 && (y - 360.0).abs() < 400.0,
+        "continued tracking must stay near the handed-off cursor, got {x},{y}"
     );
 }

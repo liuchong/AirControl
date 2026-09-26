@@ -428,6 +428,7 @@ final class AppModel: ObservableObject {
             guard generation == controlGeneration, controlEnabled else { return }
             visionSuspended = false
             visionFailureTracker.reset()
+            seedCursorToSystemPointer()
             runState = .controlling
         } catch {
             guard generation == controlGeneration else { return }
@@ -540,6 +541,15 @@ final class AppModel: ObservableObject {
             safeStop()
             runState = .error(error.localizedDescription)
         }
+    }
+
+    private func seedCursorToSystemPointer() {
+        guard let core, let settings = settingsStore?.settings else { return }
+        let mouse = NSEvent.mouseLocation
+        let x = min(max(mouse.x, settings.screenOriginX), settings.screenOriginX + settings.screenWidth)
+        let y = min(max(mouse.y, settings.screenOriginY), settings.screenOriginY + settings.screenHeight)
+        guard (try? core.rebasePointer(to: CGPoint(x: x, y: y))) != nil else { return }
+        try? core.clearPointerRebase()
     }
 
     private func rebuildCore(using original: CoreSettings) throws {

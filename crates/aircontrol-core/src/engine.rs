@@ -94,6 +94,10 @@ pub struct Engine {
     window_anchor_palm: Option<Point>,
     window_anchor_cursor: (f64, f64),
     external_pointer: Option<ExternalPointerHandoff>,
+    pointer_anchor: Option<Point>,
+    pointer_armed: bool,
+    pointer_origin_hand: Option<Point>,
+    pointer_origin_cursor: (f64, f64),
 }
 
 #[derive(Clone, Copy)]
@@ -135,6 +139,10 @@ impl Engine {
             window_anchor_palm: None,
             window_anchor_cursor: (0.0, 0.0),
             external_pointer: None,
+            pointer_anchor: None,
+            pointer_armed: false,
+            pointer_origin_hand: None,
+            pointer_origin_cursor: (0.0, 0.0),
         })
     }
 
@@ -335,12 +343,16 @@ impl Engine {
             && self.pointer_is_extended(points.index_extended(), timestamp)
             && let Some(index_tip) = points.index_tip
         {
-            let cursor = self.cursor_for(index_tip, timestamp);
             self.state = GestureState::Pointer;
-            return vec![Command::Move {
-                x: cursor.0,
-                y: cursor.1,
-            }];
+            return self
+                .cursor_for(index_tip, timestamp)
+                .map(|cursor| {
+                    vec![Command::Move {
+                        x: cursor.0,
+                        y: cursor.1,
+                    }]
+                })
+                .unwrap_or_default();
         }
 
         self.state = points.resting_state();
@@ -617,11 +629,13 @@ impl Engine {
                     && evidence == PinchEvidence::Closed
                     && let Some(index_tip) = points.index_tip
                 {
-                    let cursor = self.cursor_for(index_tip, timestamp);
-                    return vec![Command::Move {
-                        x: cursor.0,
-                        y: cursor.1,
-                    }];
+                    if let Some(cursor) = self.cursor_for(index_tip, timestamp) {
+                        return vec![Command::Move {
+                            x: cursor.0,
+                            y: cursor.1,
+                        }];
+                    }
+                    return Vec::new();
                 }
                 Vec::new()
             }
@@ -669,7 +683,7 @@ impl Engine {
         }
     }
 
-    fn cursor_for(&mut self, point: Point, timestamp: f64) -> (f64, f64) {
+    fn cursor_for(&mut self, point: Point, timestamp: f64) -> Option<(f64, f64)> {
         let filtered = self
             .cursor_filter
             .update(point, timestamp, self.settings.smoothing);
@@ -678,7 +692,7 @@ impl Engine {
                 handoff.hand_anchor = Some(filtered);
                 self.external_pointer = Some(handoff);
                 self.last_cursor = handoff.cursor_anchor;
-                return handoff.cursor_anchor;
+                return Some(handoff.cursor_anchor);
             };
             let screen = self.settings.screen;
             let target = (
@@ -688,14 +702,38 @@ impl Engine {
                     .clamp(screen.origin_y, screen.origin_y + screen.height),
             );
             self.last_cursor = target;
-            return target;
+            return Some(target);
         }
-        let target = self
-            .settings
-            .calibration
-            .map_mirrored(filtered, self.settings.screen);
+        self.engaged_cursor(filtered)
+    }
+
+    /// Keep the cursor still until the index tip travels past a deliberate
+    /// distance, then follow at the calibrated gain from the cursor's current
+    /// position. The first recognized point never teleports the pointer.
+    fn engaged_cursor(&mut self, filtered: Point) -> Option<(f64, f64)> {
+        let anchor = *self.pointer_anchor.get_or_insert(filtered);
+        if !self.pointer_armed {
+            if distance(filtered, anchor) < POINTER_ENGAGE_DISTANCE {
+                return None;
+            }
+            self.pointer_armed = true;
+            self.pointer_origin_hand = Some(anchor);
+            self.pointer_origin_cursor = self.last_cursor;
+        }
+        let origin_hand = self.pointer_origin_hand.unwrap_or(filtered);
+        let origin = self.pointer_origin_cursor;
+        let calibration = self.settings.calibration;
+        let screen = self.settings.screen;
+        let x_span = (calibration.max_x - calibration.min_x).max(0.25);
+        let y_span = (calibration.max_y - calibration.min_y).max(0.20);
+        let target = (
+            (origin.0 - (filtered.x - origin_hand.x) / x_span * screen.width)
+                .clamp(screen.origin_x, screen.origin_x + screen.width),
+            (origin.1 - (filtered.y - origin_hand.y) / y_span * screen.height)
+                .clamp(screen.origin_y, screen.origin_y + screen.height),
+        );
         self.last_cursor = target;
-        target
+        Some(target)
     }
 
     fn process_window_grab(
@@ -897,6 +935,10 @@ impl Engine {
         self.index_extended_at = None;
         self.cursor_filter.reset();
         self.external_pointer = None;
+        self.pointer_anchor = None;
+        self.pointer_armed = false;
+        self.pointer_origin_hand = None;
+        self.pointer_origin_cursor = self.last_cursor;
         self.reset_assist_anchors();
         self.window_grab.reset();
         self.reset_window_anchors();
@@ -1187,6 +1229,8 @@ fn finger_geometry(mcp: Point, pip: Point, tip: Point) -> Option<(f64, f64, f64)
         (proximal.0 * distal.0 + proximal.1 * distal.1) / (proximal_length * distal_length);
     Some((alignment, proximal_length, distance(mcp, tip)))
 }
+
+const POINTER_ENGAGE_DISTANCE: f64 = 0.045;
 
 fn distance(a: Point, b: Point) -> f64 {
     (a.x - b.x).hypot(a.y - b.y)

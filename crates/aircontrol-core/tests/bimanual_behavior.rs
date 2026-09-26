@@ -265,7 +265,8 @@ fn only_left_fist_can_pause_and_stop_clears_pause_for_next_session() {
     assert!(paused.contains(&Command::PauseChanged { paused: true }));
     engine.stop();
 
-    let next_session = engine.process(&pointer(2.00, 0.60, 0.82));
+    engine.process(&pointer(2.00, 0.44, 0.82));
+    let next_session = engine.process(&pointer(2.12, 0.70, 0.82));
     assert!(
         next_session
             .iter()

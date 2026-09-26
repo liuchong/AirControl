@@ -4,6 +4,11 @@
       "timestamp": 0.00,
       "pointerX": 0.52,
       "ringTipConfidence": 0.0
+    },
+    {
+      "timestamp": 0.12,
+      "pointerX": 0.28,
+      "ringTipConfidence": 0.0
     }
   ],
   "expectedCommandKinds": [],

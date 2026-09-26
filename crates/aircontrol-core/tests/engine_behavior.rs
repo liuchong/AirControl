@@ -48,30 +48,45 @@ fn left_up(command: &&Command) -> bool {
 }
 
 #[test]
-fn pointer_is_mapped_and_smoothed() {
+fn pointer_stays_until_a_deliberate_move_then_tracks_from_the_current_cursor() {
     let mut engine = Engine::new(Settings::default()).unwrap();
-    let first = engine.process(&pointer(0.0, 0.20, 0.80));
-    let second = engine.process(&pointer(0.1, 0.80, 0.80));
-    let first_x = match first.last().unwrap() {
-        Command::Move { x, .. } => *x,
-        other => panic!("unexpected {other:?}"),
-    };
-    let second_x = match second.last().unwrap() {
-        Command::Move { x, .. } => *x,
-        other => panic!("unexpected {other:?}"),
-    };
-    assert!(first_x > second_x, "camera x must be mirrored");
+    engine.rebase_pointer(720.0, 450.0).unwrap();
+    engine.clear_pointer_rebase();
+
+    let settled = engine.process(&pointer(0.00, 0.40, 0.70));
+    let jitter = engine.process(&pointer(0.05, 0.412, 0.708));
     assert!(
-        second_x > 0.0,
-        "smoothing must not jump directly to the target edge"
+        settled
+            .iter()
+            .chain(jitter.iter())
+            .all(|command| !matches!(command, Command::Move { .. })),
+        "appearing and small jitter must not move the cursor"
+    );
+
+    let moved = engine.process(&pointer(0.16, 0.62, 0.70));
+    let (x, y) = moved
+        .iter()
+        .find_map(|command| match command {
+            Command::Move { x, y } => Some((*x, *y)),
+            _ => None,
+        })
+        .expect("a deliberate index move starts tracking");
+    assert!(x < 720.0, "camera x must be mirrored");
+    assert!(
+        x > 200.0 && (y - 450.0).abs() < 80.0,
+        "tracking must leave the current cursor instead of jumping to a screen edge, got {x},{y}"
     );
 }
 
 #[test]
 fn pointer_continues_when_an_unrelated_joint_is_low_confidence() {
     let mut engine = Engine::new(Settings::default()).unwrap();
-    let commands = engine
-        .process(&pointer(0.0, 0.52, 0.80).with(JointKind::RingTip, Point::new(0.60, 0.48, 0.0)));
+    engine.rebase_pointer(720.0, 450.0).unwrap();
+    engine.clear_pointer_rebase();
+    engine.process(&pointer(0.0, 0.40, 0.70));
+    let commands = engine.process(
+        &pointer(0.12, 0.62, 0.70).with(JointKind::RingTip, Point::new(0.60, 0.48, 0.0)),
+    );
 
     assert!(
         commands
@@ -86,11 +101,13 @@ fn pointer_continues_when_an_unrelated_joint_is_low_confidence() {
 fn smoothing_response_is_stable_across_frame_rates() {
     fn final_x(frame_interval: f64) -> f64 {
         let mut engine = Engine::new(Settings::default()).unwrap();
-        engine.process(&pointer(0.0, 0.20, 0.80));
+        engine.rebase_pointer(720.0, 450.0).unwrap();
+        engine.clear_pointer_rebase();
+        engine.process(&pointer(0.0, 0.80, 0.80));
         let mut timestamp = frame_interval;
         let mut x = 0.0;
         while timestamp <= 0.20 + 1e-9 {
-            let commands = engine.process(&pointer(timestamp, 0.80, 0.80));
+            let commands = engine.process(&pointer(timestamp, 0.20, 0.80));
             x = commands
                 .iter()
                 .find_map(|command| match command {
@@ -114,7 +131,10 @@ fn smoothing_response_is_stable_across_frame_rates() {
 #[test]
 fn primary_pinch_pending_freezes_cursor_and_clicks_at_anchor() {
     let mut engine = Engine::new(Settings::default()).unwrap();
-    let anchor_commands = engine.process(&pointer(0.00, 0.44, 0.82));
+    engine.rebase_pointer(720.0, 450.0).unwrap();
+    engine.clear_pointer_rebase();
+    engine.process(&pointer(0.00, 0.44, 0.82));
+    let anchor_commands = engine.process(&pointer(0.12, 0.20, 0.82));
     let anchor = anchor_commands
         .iter()
         .find_map(|command| match command {
@@ -123,8 +143,8 @@ fn primary_pinch_pending_freezes_cursor_and_clicks_at_anchor() {
         })
         .unwrap();
 
-    let first = engine.process(&pinched_at(0.05, 0.54, 0.72));
-    let second = engine.process(&pinched_at(0.10, 0.56, 0.70));
+    let first = engine.process(&pinched_at(0.20, 0.54, 0.72));
+    let second = engine.process(&pinched_at(0.25, 0.56, 0.70));
     assert!(
         first
             .iter()
@@ -133,8 +153,8 @@ fn primary_pinch_pending_freezes_cursor_and_clicks_at_anchor() {
         "pinch arming and pending must never move the visible cursor"
     );
 
-    assert!(engine.process(&hand(0.20, false, false)).is_empty());
-    let click = engine.process(&hand(0.24, false, false));
+    assert!(engine.process(&hand(0.36, false, false)).is_empty());
+    let click = engine.process(&hand(0.40, false, false));
     let click_points: Vec<_> = click
         .iter()
         .filter_map(|command| match command {

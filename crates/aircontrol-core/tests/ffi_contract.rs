@@ -91,8 +91,8 @@ fn ffi_keeps_pointer_when_an_unrelated_joint_measurement_is_invalid() {
         ACStatus::Ok
     );
 
-    let mut frame = joints(false);
-    frame[10].x = 1.02;
+    let mut settled = joints(false);
+    settled[10].x = 1.02;
     let mut commands = [ACCommand::default(); 8];
     let mut count = 0_usize;
     assert_eq!(
@@ -100,6 +100,22 @@ fn ffi_keeps_pointer_when_an_unrelated_joint_measurement_is_invalid() {
             ac_engine_process(
                 engine,
                 0.0,
+                settled.as_ptr(),
+                settled.len(),
+                commands.as_mut_ptr(),
+                commands.len(),
+                &mut count,
+            )
+        },
+        ACStatus::Ok
+    );
+    let mut frame = shifted_joints(joints(false), -0.16, 0.0);
+    frame[10].x = 1.02;
+    assert_eq!(
+        unsafe {
+            ac_engine_process(
+                engine,
+                0.12,
                 frame.as_ptr(),
                 frame.len(),
                 commands.as_mut_ptr(),
@@ -325,6 +341,15 @@ fn ffi_window_grab_commands_are_transactional_through_process_and_stop() {
     let mut engine: *mut ACEngine = ptr::null_mut();
     assert_eq!(
         unsafe { ac_engine_create(&settings, &mut engine) },
+        ACStatus::Ok
+    );
+
+    assert_eq!(
+        unsafe { ac_engine_rebase_pointer(engine, 720.0, 450.0) },
+        ACStatus::Ok
+    );
+    assert_eq!(
+        unsafe { ac_engine_clear_pointer_rebase(engine) },
         ACStatus::Ok
     );
 

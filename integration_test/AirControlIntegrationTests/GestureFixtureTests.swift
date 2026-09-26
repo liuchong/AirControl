@@ -81,13 +81,19 @@ final class GestureFixtureTests: XCTestCase {
 
     func testUnrelatedOutOfBoundsJointDoesNotDropPointerAcrossTheRealRustFFIBoundary() throws {
         let engine = try CoreEngine(settings: .rustDefaults())
-        let commands = try engine.process(timestamp: 0.0, joints: TestHand.jointsWithOutOfBoundsRingTip())
+        _ = try engine.process(timestamp: 0.0, joints: TestHand.pointer(indexX: 0.44))
+        let moved = TestHand.pointer(indexX: 0.20).map { joint in
+            guard joint.kind == .ringTip else { return joint }
+            return StandardJoint(kind: joint.kind, x: 1.02, y: joint.y, confidence: joint.confidence)
+        }
+        let commands = try engine.process(timestamp: 0.12, joints: moved)
         XCTAssertTrue(commands.contains { $0.kindCode == 1 })
     }
 
     func testPrimaryPinchFreezesAndClicksAtAnchorAcrossTheRealRustFFIBoundary() throws {
         let engine = try CoreEngine(settings: .rustDefaults())
-        let initial = try engine.process(timestamp: 0.00, joints: TestHand.pointer(indexX: 0.44))
+        _ = try engine.process(timestamp: 0.00, joints: TestHand.pointer(indexX: 0.44))
+        let initial = try engine.process(timestamp: 0.12, joints: TestHand.pointer(indexX: 0.20))
         let anchor = try XCTUnwrap(initial.compactMap { command -> (Double, Double)? in
             guard case .move(let x, let y) = command else { return nil }
             return (x, y)

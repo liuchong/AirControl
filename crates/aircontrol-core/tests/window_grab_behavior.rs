@@ -25,24 +25,18 @@ fn isolated_right_fist_never_starts_window_grab_or_pauses() {
 #[test]
 fn stable_open_then_closing_then_fist_starts_once_at_the_frozen_cursor() {
     let mut engine = Engine::new(Settings::default()).unwrap();
-    let first = engine.process(&open_palm(0.00));
-    let anchor = first
-        .iter()
-        .rev()
-        .find_map(|command| match command {
-            Command::Move { x, y } => Some((*x, *y)),
-            _ => None,
-        })
-        .expect("open hand should establish a cursor position");
-    let armed = engine.process(&open_palm(0.13));
-    let armed_anchor = armed
-        .iter()
-        .rev()
-        .find_map(|command| match command {
-            Command::Move { x, y } => Some((*x, *y)),
-            _ => None,
-        })
-        .unwrap_or(anchor);
+    engine.rebase_pointer(720.0, 450.0).unwrap();
+    engine.clear_pointer_rebase();
+    let settled = engine.process(&open_palm(0.00));
+    let held = engine.process(&open_palm(0.13));
+    assert!(
+        settled
+            .iter()
+            .chain(held.iter())
+            .all(|command| !matches!(command, Command::Move { .. })),
+        "holding an open palm must not start the cursor by itself"
+    );
+    let armed_anchor = (720.0, 450.0);
 
     let closing = engine.process(&closing_hand(0.20));
     let first_fist = engine.process(&fist(0.25));
@@ -250,6 +244,8 @@ fn closing_that_takes_too_long_must_be_rearmed_from_an_open_palm() {
 }
 
 fn complete_grab(engine: &mut Engine) {
+    engine.rebase_pointer(720.0, 450.0).unwrap();
+    engine.clear_pointer_rebase();
     engine.process(&open_palm(0.00));
     engine.process(&open_palm(0.13));
     engine.process(&closing_hand(0.20));
