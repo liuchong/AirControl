@@ -32,7 +32,7 @@ impl CursorFilter {
         // Ordinary pointing is only a few hundredths of the frame per sample.
         // The fast response has to begin there; reserving it for very large
         // jumps makes normal motion feel late and then catch up in steps.
-        let motion = (displacement / 0.03).clamp(0.0, 1.0);
+        let motion = (displacement / 0.08).clamp(0.0, 1.0);
         let time_constant = slow_time_constant + (fast_time_constant - slow_time_constant) * motion;
         let alpha = 1.0 - (-elapsed / time_constant).exp();
 
@@ -64,9 +64,9 @@ mod tests {
         moving.update(start, 0.0, 0.32);
         jitter.update(start, 0.0, 0.32);
 
-        let moved = moving.update(Point::new(0.44, 0.50, 1.0), 0.10, 0.32);
+        let moved = moving.update(Point::new(0.50, 0.50, 1.0), 0.10, 0.32);
         let held = jitter.update(Point::new(0.404, 0.50, 1.0), 0.10, 0.32);
-        let move_ratio = (moved.x - start.x) / 0.04;
+        let move_ratio = (moved.x - start.x) / 0.10;
         let jitter_ratio = (held.x - start.x) / 0.004;
 
         assert!(

@@ -37,7 +37,7 @@ impl Calibration {
 
     pub fn map_mirrored(&self, point: Point, screen: ScreenRect) -> (f64, f64) {
         let normalized_x = ((self.max_x - point.x) / (self.max_x - self.min_x)).clamp(0.0, 1.0);
-        let normalized_y = ((point.y - self.min_y) / (self.max_y - self.min_y)).clamp(0.0, 1.0);
+        let normalized_y = ((self.max_y - point.y) / (self.max_y - self.min_y)).clamp(0.0, 1.0);
         (
             screen.origin_x + normalized_x * screen.width,
             screen.origin_y + normalized_y * screen.height,

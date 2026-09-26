@@ -65,11 +65,11 @@ fn mapping_mirrors_camera_x_and_converts_y_to_screen_coordinates() {
     };
     let (x, y) = calibration.map_mirrored(Point::new(0.1, 0.9, 1.0), screen);
     assert!((x - 1100.0).abs() < 0.001);
-    assert!((y - 700.0).abs() < 0.001);
+    assert!((y - 200.0).abs() < 0.001);
 
     let (x, y) = calibration.map_mirrored(Point::new(1.0, 0.0, 1.0), screen);
     assert!((x - 100.0).abs() < 0.001);
-    assert!((y - 200.0).abs() < 0.001);
+    assert!((y - 700.0).abs() < 0.001);
 }
 
 #[test]

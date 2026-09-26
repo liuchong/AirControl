@@ -303,10 +303,10 @@ fn raising_the_palm_moves_the_grab_up_at_the_pointer_gain() {
         }
     }
 
-    let expected = 450.0 + 0.08 / 0.80 * 900.0;
+    let expected = 450.0 - 0.08 / 0.80 * 900.0;
     assert!(
-        raised_y > anchor_y + 40.0,
-        "raising the hand must move the window up, got {raised_y} from {anchor_y}"
+        raised_y < anchor_y - 40.0,
+        "camera y grows downward, so the window must follow that axis, got {raised_y} from {anchor_y}"
     );
     assert!(
         (raised_y - expected).abs() < 8.0,

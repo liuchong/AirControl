@@ -80,7 +80,10 @@ fn pointer_stays_until_a_deliberate_move_then_tracks_from_the_current_cursor() {
             _ => None,
         })
         .expect("raising the index moves the cursor");
-    assert!(raised_y > y, "hand moving up must move the cursor up");
+    assert!(
+        raised_y < y,
+        "camera y grows downward, so a higher camera y must move the cursor down"
+    );
     assert!(
         x > 200.0 && (y - 450.0).abs() < 80.0,
         "tracking must leave the current cursor instead of jumping to a screen edge, got {x},{y}"
