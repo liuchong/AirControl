@@ -231,7 +231,7 @@ impl Engine {
 
         let mut mode_commands = match self.assist_tracker.active() {
             AssistMode::None => {
-                let grab_allowed = frame.right().is_some() && !self.grab_is_held(right);
+                let grab_allowed = self.controlling_hand_may_grab(frame) && !self.grab_is_held(right);
                 let (window_commands, suppress_standard) =
                     self.process_window_grab(right, timestamp, grab_allowed);
                 if suppress_standard {
@@ -287,6 +287,12 @@ impl Engine {
         self.left_fist_latched = false;
         self.state = GestureState::NoHand;
         commands
+    }
+
+    fn controlling_hand_may_grab(&self, frame: &HandsFrame) -> bool {
+        frame.right().is_some()
+            || self.window_grab.is_engaged()
+            || (frame.left().is_none() && frame.unknown().is_some())
     }
 
     fn grab_is_held(&mut self, right: Option<HandPoints>) -> bool {

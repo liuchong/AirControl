@@ -211,6 +211,10 @@ impl WindowGrabTracker {
         }
     }
 
+    pub fn is_engaged(&self) -> bool {
+        !matches!(self.phase, Phase::Idle)
+    }
+
     pub fn reset(&mut self) {
         self.phase = Phase::Idle;
         self.last_seen_at = None;

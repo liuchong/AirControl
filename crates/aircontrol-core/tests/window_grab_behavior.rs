@@ -138,7 +138,7 @@ fn hand_loss_and_stop_release_an_active_window_grab_once() {
 }
 
 #[test]
-fn unknown_hand_and_active_left_assist_cannot_arm_window_grab() {
+fn lone_unknown_hand_can_grab_but_left_assist_still_blocks_it() {
     let mut unknown_engine = Engine::new(Settings::default()).unwrap();
     let sequence = [
         unknown_hand(0.00, open_palm(0.00)),
@@ -151,9 +151,9 @@ fn unknown_hand_and_active_left_assist_cannot_arm_window_grab() {
         .iter()
         .flat_map(|frame| unknown_engine.process_hands(frame))
         .collect();
-    assert!(unknown_commands.iter().all(|command| !matches!(
+    assert!(unknown_commands.iter().any(|command| matches!(
         command,
-        Command::WindowGrabBegin { .. } | Command::WindowMove { .. }
+        Command::WindowGrabBegin { .. }
     )));
 
     let mut assisted_engine = Engine::new(Settings::default()).unwrap();
@@ -185,6 +185,38 @@ fn unknown_hand_and_active_left_assist_cannot_arm_window_grab() {
     assert!(assisted_commands.iter().all(|command| !matches!(
         command,
         Command::WindowGrabBegin { .. } | Command::WindowMove { .. }
+    )));
+}
+
+#[test]
+fn grab_continues_when_the_closing_hand_loses_its_right_label() {
+    let mut engine = Engine::new(Settings::default()).unwrap();
+    engine.rebase_pointer(720.0, 450.0).unwrap();
+    engine.clear_pointer_rebase();
+    engine.process_hands(&hands(0.00, None, Some(open_palm(0.00))));
+    engine.process_hands(&hands(0.13, None, Some(open_palm(0.13))));
+    engine.process_hands(&unknown_hand(0.20, closing_hand(0.20)));
+    engine.process_hands(&unknown_hand(0.25, fist(0.25)));
+    let begun = engine.process_hands(&unknown_hand(0.29, fist(0.29)));
+    assert!(begun.iter().any(|command| matches!(command, Command::WindowGrabBegin { .. })));
+}
+
+#[test]
+fn explicit_left_hand_never_grabs_a_window() {
+    let mut engine = Engine::new(Settings::default()).unwrap();
+    let mut commands = Vec::new();
+    for (timestamp, pose) in [
+        (0.00, open_palm(0.00)),
+        (0.13, open_palm(0.13)),
+        (0.20, closing_hand(0.20)),
+        (0.25, fist(0.25)),
+        (0.29, fist(0.29)),
+    ] {
+        commands.extend(engine.process_hands(&hands(timestamp, Some(pose), None)));
+    }
+    assert!(commands.iter().all(|command| !matches!(
+        command,
+        Command::WindowGrabBegin { .. }
     )));
 }
 
